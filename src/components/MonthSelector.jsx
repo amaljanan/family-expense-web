@@ -7,8 +7,6 @@ export default function MonthSelector({ month, setMonth, year, setYear }) {
     else setMonth(m => m - 1)
   }
   const next = () => {
-    const now = new Date()
-    if (year > now.getFullYear() || (year === now.getFullYear() && month >= now.getMonth() + 1)) return
     if (month === 12) { setMonth(1); setYear(y => y + 1) }
     else setMonth(m => m + 1)
   }
@@ -37,10 +35,9 @@ export default function MonthSelector({ month, setMonth, year, setYear }) {
         )}
       </div>
 
-      <button onClick={next} disabled={isCurrentMonth()}
+      <button onClick={next}
               className="w-7 h-7 flex items-center justify-center rounded-lg
-                         hover:bg-slate-100 active:scale-90 transition-all duration-150
-                         disabled:opacity-30 disabled:cursor-not-allowed">
+                         hover:bg-slate-100 active:scale-90 transition-all duration-150">
         <ChevronRight className="w-4 h-4 text-slate-500" />
       </button>
     </div>
