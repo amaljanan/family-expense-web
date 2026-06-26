@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Lock, User, Eye, EyeOff } from 'lucide-react'
 import { login, setFamily } from '../lib/auth'
 
-export default function Login({ onSuccess }) {
+export default function Login({ onSuccess, onCreateFamily }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPw,   setShowPw]   = useState(false)
@@ -101,7 +101,15 @@ export default function Login({ onSuccess }) {
           </form>
         </div>
 
-        <p className="text-blue-300/60 text-xs text-center mt-6">Private — family use only</p>
+        <div className="mt-6 text-center">
+          <p className="text-blue-200/70 text-sm">
+            New here?{' '}
+            <button onClick={onCreateFamily}
+                    className="text-white font-semibold underline underline-offset-2 hover:text-blue-200 transition-colors">
+              Create a family account
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   )

@@ -141,8 +141,10 @@ function MonthlyView({ monthExpenses, salary1, salary2, month, year, expenses, m
       const d = new Date(year, month - 1 - i, 1)
       const m = d.getMonth() + 1, y = d.getFullYear()
       const s1 = expenses.filter(e => { const ed = new Date(e.expense_date); return e.paid_by === member1 && ed.getMonth() + 1 === m && ed.getFullYear() === y }).reduce((s, e) => s + e.amount, 0)
-      const s2 = expenses.filter(e => { const ed = new Date(e.expense_date); return e.paid_by === member2 && ed.getMonth() + 1 === m && ed.getFullYear() === y }).reduce((s, e) => s + e.amount, 0)
-      result.push({ label: shortMonth(m), total: s1 + s2, [member1]: s1, [member2]: s2 })
+      const s2 = member2 ? expenses.filter(e => { const ed = new Date(e.expense_date); return e.paid_by === member2 && ed.getMonth() + 1 === m && ed.getFullYear() === y }).reduce((s, e) => s + e.amount, 0) : 0
+      const pt = { label: shortMonth(m), total: s1 + s2, [member1]: s1 }
+      if (member2) pt[member2] = s2
+      result.push(pt)
     }
     return result
   }, [expenses, month, year, member1, member2])
@@ -206,7 +208,8 @@ function MonthlyView({ monthExpenses, salary1, salary2, month, year, expenses, m
         </div>
       </div>
 
-      {/* Person comparison */}
+      {/* Person comparison — only if 2 members */}
+      {member2 && (
       <div className="card p-4">
         <SectionTitle title={`${emoji1} ${member1} vs ${emoji2} ${member2}`} sub="Spending comparison this month" />
         <div className="grid grid-cols-2 gap-3 mb-1">
@@ -230,6 +233,7 @@ function MonthlyView({ monthExpenses, salary1, salary2, month, year, expenses, m
           ))}
         </div>
       </div>
+      )} {/* end member2 comparison */}
 
       {/* Category breakdown — ranked */}
       <div className="card p-4">
@@ -276,13 +280,13 @@ function MonthlyView({ monthExpenses, salary1, salary2, month, year, expenses, m
                      tickFormatter={v => `₹${(v/1000).toFixed(0)}k`} width={38} />
               <Tooltip contentStyle={TOOLTIP} formatter={v => fmt(v)} />
               <Bar dataKey={member1} name={member1} fill="#2563eb" radius={[4, 4, 0, 0]} />
-              <Bar dataKey={member2} name={member2} fill="#db2777" radius={[4, 4, 0, 0]} />
+              {member2 && <Bar dataKey={member2} name={member2} fill="#db2777" radius={[4, 4, 0, 0]} />}
             </BarChart>
           </ResponsiveContainer>
         </div>
         <div className="flex gap-4 mt-2 justify-center text-xs">
           <span className="flex items-center gap-1.5 text-slate-500"><span className="w-3 h-3 rounded bg-blue-600 inline-block" /> {member1}</span>
-          <span className="flex items-center gap-1.5 text-slate-500"><span className="w-3 h-3 rounded bg-pink-600 inline-block" /> {member2}</span>
+          {member2 && <span className="flex items-center gap-1.5 text-slate-500"><span className="w-3 h-3 rounded bg-pink-600 inline-block" /> {member2}</span>}
         </div>
       </div>
 
@@ -300,7 +304,7 @@ function MonthlyView({ monthExpenses, salary1, salary2, month, year, expenses, m
                 </div>
               </div>
             )}
-            {spent1 !== spent2 && (
+            {member2 && spent1 !== spent2 && (
               <div className={`flex items-start gap-3 p-3 rounded-xl border ${spent1 > spent2 ? 'bg-blue-50 border-blue-100' : 'bg-pink-50 border-pink-100'}`}>
                 <span className="text-2xl">{spent1 > spent2 ? emoji1 : emoji2}</span>
                 <div>
@@ -366,9 +370,11 @@ function WeeklyView({ monthExpenses, month, year, salary1, salary2, member1, mem
     for (let day = selWeek.start; day <= selWeek.end; day++) {
       const date = new Date(year, month - 1, day)
       const dayLabel = DAY_LABELS[date.getDay()]
-      const s1 = weekExpenses.filter(e => new Date(e.expense_date).getDate() === day && e.paid_by === member1).reduce((s, e) => s + e.amount, 0)
-      const s2 = weekExpenses.filter(e => new Date(e.expense_date).getDate() === day && e.paid_by === member2).reduce((s, e) => s + e.amount, 0)
-      data.push({ day: `${dayLabel} ${day}`, [member1]: s1, [member2]: s2, total: s1 + s2 })
+      const s1  = weekExpenses.filter(e => new Date(e.expense_date).getDate() === day && e.paid_by === member1).reduce((s, e) => s + e.amount, 0)
+      const s2  = member2 ? weekExpenses.filter(e => new Date(e.expense_date).getDate() === day && e.paid_by === member2).reduce((s, e) => s + e.amount, 0) : 0
+      const pt  = { day: `${dayLabel} ${day}`, [member1]: s1, total: s1 + s2 }
+      if (member2) pt[member2] = s2
+      data.push(pt)
     }
     return data
   }, [weekExpenses, selWeek, year, month])
@@ -431,10 +437,10 @@ function WeeklyView({ monthExpenses, month, year, salary1, salary2, member1, mem
             )}
           </div>
         </div>
-        <div className="grid grid-cols-2 divide-x divide-slate-100 p-0">
+        <div className={`${member2 ? 'grid grid-cols-2 divide-x divide-slate-100' : 'flex justify-center'} p-0`}>
           {[
             { name: member1, amount: week1, color: '#2563eb', bg: 'bg-blue-50', emoji: emoji1 },
-            { name: member2, amount: week2, color: '#db2777', bg: 'bg-pink-50', emoji: emoji2 },
+            ...(member2 ? [{ name: member2, amount: week2, color: '#db2777', bg: 'bg-pink-50', emoji: emoji2 }] : []),
           ].map(p => (
             <div key={p.name} className={`${p.bg} p-3 text-center`}>
               <p className="text-xs text-slate-500">{p.emoji} {p.name}</p>
@@ -461,13 +467,13 @@ function WeeklyView({ monthExpenses, month, year, salary1, salary2, member1, mem
                          tickFormatter={v => `₹${(v/1000).toFixed(0)}k`} width={36} />
                   <Tooltip contentStyle={TOOLTIP} formatter={v => fmt(v)} />
                   <Bar dataKey={member1} name={member1} fill="#2563eb" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey={member2} name={member2} fill="#db2777" radius={[3, 3, 0, 0]} />
+                  {member2 && <Bar dataKey={member2} name={member2} fill="#db2777" radius={[3, 3, 0, 0]} />}
                 </BarChart>
               </ResponsiveContainer>
             </div>
             <div className="flex gap-4 mt-1 justify-center text-xs">
               <span className="flex items-center gap-1.5 text-slate-500"><span className="w-3 h-3 rounded bg-blue-600 inline-block" /> {member1}</span>
-              <span className="flex items-center gap-1.5 text-slate-500"><span className="w-3 h-3 rounded bg-pink-600 inline-block" /> {member2}</span>
+              {member2 && <span className="flex items-center gap-1.5 text-slate-500"><span className="w-3 h-3 rounded bg-pink-600 inline-block" /> {member2}</span>}
             </div>
           </>
         )}

@@ -61,7 +61,7 @@ function PersonCard({ name, spent, salary, color, bgColor, emoji }) {
   )
 }
 
-function RecentItem({ expense }) {
+function RecentItem({ expense, member1 }) {
   const cat = getCategoryById(expense.category)
   return (
     <div className="flex items-center gap-3 py-3 border-b border-slate-50 last:border-0">
@@ -77,7 +77,7 @@ function RecentItem({ expense }) {
           <span className="text-xs font-medium" style={{ color: cat.color }}>{cat.label}</span>
           <span className="text-slate-300 text-xs">·</span>
           <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
-            expense.paid_by === 'Amal' ? 'bg-blue-100 text-blue-600' : 'bg-pink-100 text-pink-600'
+            expense.paid_by === member1 ? 'bg-blue-100 text-blue-600' : 'bg-pink-100 text-pink-600'
           }`}>{expense.paid_by}</span>
         </div>
       </div>
@@ -174,11 +174,13 @@ export default function Dashboard({ monthExpenses, salary1, salary2, member1, me
         </div>
 
         {/* Person cards */}
-        <div className="flex gap-3">
+        <div className={`flex gap-3 ${!member2 ? 'justify-center' : ''}`}>
           <PersonCard name={member1} spent={spent1} salary={salary1}
                       color="#2563eb" bgColor="bg-blue-100" emoji={emoji1} />
-          <PersonCard name={member2} spent={spent2} salary={salary2}
-                      color="#db2777" bgColor="bg-pink-100" emoji={emoji2} />
+          {member2 && (
+            <PersonCard name={member2} spent={spent2} salary={salary2}
+                        color="#db2777" bgColor="bg-pink-100" emoji={emoji2} />
+          )}
         </div>
 
         {/* Category spending */}
@@ -236,7 +238,7 @@ export default function Dashboard({ monthExpenses, salary1, salary2, member1, me
               </button>
             </div>
           ) : (
-            recent.map(e => <RecentItem key={e.id} expense={e} />)
+            recent.map(e => <RecentItem key={e.id} expense={e} member1={member1} />)
           )}
         </div>
       </div>

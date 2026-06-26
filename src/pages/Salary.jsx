@@ -139,14 +139,16 @@ export default function Salary({ salaries, month, setMonth, year, setYear, onRef
 
         <SalaryEntry person={member1} salary={salary1} month={month} year={year} familyId={familyId}
                      onRefresh={onRefresh} color="#2563eb" bgColor="bg-blue-100" emoji={emoji1} />
-        <SalaryEntry person={member2} salary={salary2} month={month} year={year} familyId={familyId}
-                     onRefresh={onRefresh} color="#db2777" bgColor="bg-pink-100" emoji={emoji2} />
+        {member2 && (
+          <SalaryEntry person={member2} salary={salary2} month={month} year={year} familyId={familyId}
+                       onRefresh={onRefresh} color="#db2777" bgColor="bg-pink-100" emoji={emoji2} />
+        )}
 
         {salaries.length > 0 && (
           <div className="card p-4 space-y-4">
             <h3 className="text-sm font-semibold text-slate-800">Salary History</h3>
             <SalaryHistory salaries={salaries} person={member1} color="#2563eb" />
-            <SalaryHistory salaries={salaries} person={member2} color="#db2777" />
+            {member2 && <SalaryHistory salaries={salaries} person={member2} color="#db2777" />}
           </div>
         )}
 

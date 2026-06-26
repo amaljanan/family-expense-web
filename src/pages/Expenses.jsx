@@ -107,7 +107,7 @@ export default function Expenses({ monthExpenses, month, setMonth, year, setYear
         <MonthSelector month={month} setMonth={setMonth} year={year} setYear={setYear} />
 
         {/* Summary strip */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className={`grid gap-2 ${member2 ? 'grid-cols-3' : 'grid-cols-2'}`}>
           <div className="card p-3 text-center">
             <p className="text-[11px] text-slate-400 font-medium">Total</p>
             <p className="text-sm font-bold text-slate-800">{fmt(total)}</p>
@@ -116,10 +116,12 @@ export default function Expenses({ monthExpenses, month, setMonth, year, setYear
             <p className="text-[11px] text-blue-500 font-medium">{emoji1} {member1}</p>
             <p className="text-sm font-bold text-blue-600">{fmt(total1)}</p>
           </div>
-          <div className="card p-3 text-center border-t-2 border-pink-400">
-            <p className="text-[11px] text-pink-500 font-medium">{emoji2} {member2}</p>
-            <p className="text-sm font-bold text-pink-600">{fmt(total2)}</p>
-          </div>
+          {member2 && (
+            <div className="card p-3 text-center border-t-2 border-pink-400">
+              <p className="text-[11px] text-pink-500 font-medium">{emoji2} {member2}</p>
+              <p className="text-sm font-bold text-pink-600">{fmt(total2)}</p>
+            </div>
+          )}
         </div>
 
         {/* Search + Filter */}
@@ -161,7 +163,7 @@ export default function Expenses({ monthExpenses, month, setMonth, year, setYear
             <div>
               <label className="label">Person</label>
               <div className="flex gap-2">
-                {[['all', 'Everyone'], [member1, `${emoji1} ${member1}`], [member2, `${emoji2} ${member2}`]].map(([v, l]) => (
+                {[['all', 'Everyone'], [member1, `${emoji1} ${member1}`], ...(member2 ? [[member2, `${emoji2} ${member2}`]] : [])].map(([v, l]) => (
                   <button key={v} onClick={() => setFilterPerson(v)}
                           className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all duration-150 border ${
                             filterPerson === v

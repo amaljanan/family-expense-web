@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './lib/supabase'
 import { getFamily, setFamily as persistFamily, logout } from './lib/auth'
 import Login from './pages/Login'
+import CreateFamily from './pages/CreateFamily'
 import Dashboard from './pages/Dashboard'
 import Expenses from './pages/Expenses'
 import Analytics from './pages/Analytics'
@@ -144,10 +145,21 @@ function AppShell({ family, onLogout }) {
 }
 
 export default function App() {
-  const [family, setFamilyState] = useState(getFamily)
+  const [family,   setFamilyState] = useState(getFamily)
+  const [creating, setCreating]    = useState(false)
 
-  if (!family) {
-    return <Login onSuccess={(fam) => { persistFamily(fam); setFamilyState(fam) }} />
+  const handleSuccess = (fam) => { persistFamily(fam); setFamilyState(fam); setCreating(false) }
+
+  if (!family && !creating) {
+    return (
+      <Login
+        onSuccess={handleSuccess}
+        onCreateFamily={() => setCreating(true)}
+      />
+    )
+  }
+  if (creating) {
+    return <CreateFamily onSuccess={handleSuccess} onBack={() => setCreating(false)} />
   }
   return <AppShell family={family} onLogout={() => setFamilyState(null)} />
 }

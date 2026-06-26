@@ -126,10 +126,10 @@ export default function AddExpenseModal({ onClose, onSave, initialData, member1 
           {/* Paid by */}
           <div>
             <label className="label">Paid by</label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className={`grid gap-3 ${member2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
               {[
                 { name: member1, emoji: emoji1, active: 'bg-blue-50 border-blue-400 text-blue-700' },
-                { name: member2, emoji: emoji2, active: 'bg-pink-50 border-pink-400 text-pink-700' },
+                ...(member2 ? [{ name: member2, emoji: emoji2, active: 'bg-pink-50 border-pink-400 text-pink-700' }] : []),
               ].map(p => (
                 <button key={p.name} onClick={() => set('paid_by', p.name)}
                         className={`py-3 rounded-xl border font-semibold transition-all duration-150 active:scale-95 text-sm ${
