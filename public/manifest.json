@@ -1,7 +1,7 @@
 {
-  "name": "Family Finance — Amal & Aiswarya",
+  "name": "Family Finance",
   "short_name": "FamilyFinance",
-  "description": "Family expense and income tracker for Amal & Aiswarya",
+  "description": "Family expense and income tracker",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",

@@ -10,7 +10,7 @@ import BottomNav from './components/BottomNav'
 import AddExpenseModal from './components/AddExpenseModal'
 import ChangePasswordModal from './components/ChangePasswordModal'
 
-function LoadingScreen({ familyName }) {
+function LoadingScreen() {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
       <div className="text-center animate-fade-in">
@@ -18,7 +18,6 @@ function LoadingScreen({ familyName }) {
           <span className="text-3xl">💰</span>
         </div>
         <p className="text-blue-700 text-2xl font-bold">Family Finance</p>
-        <p className="text-slate-400 text-sm mt-1">{familyName}</p>
         <div className="mt-6 flex gap-1 justify-center">
           {[0,1,2].map(i => (
             <div key={i} className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
@@ -95,7 +94,7 @@ function AppShell({ family }) {
     onChangePw:     () => setShowChangePw(true),
   }
 
-  if (loading) return <LoadingScreen familyName={familyName} />
+  if (loading) return <LoadingScreen />
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
