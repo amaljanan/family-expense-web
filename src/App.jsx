@@ -49,24 +49,28 @@ function AppShell({ family, onLogout }) {
   const [showChangePw, setShowChangePw]   = useState(false)
   const [expenses, setExpenses]           = useState([])
   const [salaries, setSalaries]           = useState([])
+  const [budgets, setBudgets]             = useState([])
   const [loading, setLoading]             = useState(true)
   const [error, setError]                 = useState(null)
   const [month, setMonth]                 = useState(now.getMonth() + 1)
   const [year, setYear]                   = useState(now.getFullYear())
 
   const fetchAll = useCallback(async () => {
-    const [expRes, salRes] = await Promise.all([
+    const [expRes, salRes, budRes] = await Promise.all([
       supabase.from('expenses').select('*')
         .eq('family_id', familyId)
         .order('expense_date', { ascending: false }),
       supabase.from('salaries').select('*')
         .eq('family_id', familyId)
         .order('year', { ascending: false }).order('month', { ascending: false }),
+      supabase.from('category_budgets').select('*')
+        .eq('family_id', familyId),
     ])
     if (expRes.error) setError(expRes.error.message)
     else setExpenses(expRes.data ?? [])
     if (salRes.error) setError(salRes.error.message)
     else setSalaries(salRes.data ?? [])
+    if (!budRes.error) setBudgets(budRes.data ?? [])
   }, [familyId])
 
   useEffect(() => { fetchAll().finally(() => setLoading(false)) }, [fetchAll])
@@ -84,7 +88,7 @@ function AppShell({ family, onLogout }) {
     salaries.find(s => s.person === person && s.month === month && s.year === year)?.amount ?? 0
 
   const shared = {
-    expenses, monthExpenses, salaries,
+    expenses, monthExpenses, salaries, budgets,
     member1, member2, emoji1, emoji2, familyName, familyId,
     salary1: getSalaryFor(member1),
     salary2: getSalaryFor(member2),
@@ -92,6 +96,7 @@ function AppShell({ family, onLogout }) {
     onAddExpense:   () => setShowAdd(true),
     onEditExpense:  (expense) => setEditingExpense(expense),
     onRefresh:      fetchAll,
+    onBudgetRefresh: fetchAll,
     onChangePw:     () => setShowChangePw(true),
     onLogout:       () => { logout(); onLogout() },
   }
