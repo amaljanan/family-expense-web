@@ -5,7 +5,7 @@ import { getCategoryById, CATEGORIES } from '../data/categories'
 import MonthSelector from '../components/MonthSelector'
 import { supabase } from '../lib/supabase'
 
-function ExpenseItem({ expense, onDelete, onEdit }) {
+function ExpenseItem({ expense, onDelete, onEdit, member1 = 'Amal' }) {
   const cat = getCategoryById(expense.category)
   const [deleting, setDeleting] = useState(false)
 
@@ -32,7 +32,7 @@ function ExpenseItem({ expense, onDelete, onEdit }) {
           <span className="text-xs font-medium" style={{ color: cat.color }}>{cat.label}</span>
           <span className="text-slate-300 text-xs">·</span>
           <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
-            expense.paid_by === 'Amal' ? 'bg-blue-100 text-blue-600' : 'bg-pink-100 text-pink-600'
+            expense.paid_by === member1 ? 'bg-blue-100 text-blue-600' : 'bg-pink-100 text-pink-600'
           }`}>{expense.paid_by}</span>
           {expense.is_recurring && (
             <span className="text-[10px] bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded-full font-medium">🔄 Recurring</span>
@@ -59,7 +59,7 @@ function ExpenseItem({ expense, onDelete, onEdit }) {
   )
 }
 
-export default function Expenses({ monthExpenses, month, setMonth, year, setYear, onAddExpense, onEditExpense, onRefresh }) {
+export default function Expenses({ monthExpenses, month, setMonth, year, setYear, onAddExpense, onEditExpense, onRefresh, member1 = 'Amal', member2 = 'Aiswarya', emoji1 = '👨', emoji2 = '👩' }) {
   const [search, setSearch] = useState('')
   const [filterPerson, setFilterPerson] = useState('all')
   const [filterCategory, setFilterCategory] = useState('all')
@@ -79,9 +79,9 @@ export default function Expenses({ monthExpenses, month, setMonth, year, setYear
     return list
   }, [monthExpenses, search, filterPerson, filterCategory])
 
-  const amalTotal     = useMemo(() => monthExpenses.filter(e => e.paid_by === 'Amal').reduce((s, e) => s + e.amount, 0), [monthExpenses])
-  const aiswaryaTotal = useMemo(() => monthExpenses.filter(e => e.paid_by === 'Aiswarya').reduce((s, e) => s + e.amount, 0), [monthExpenses])
-  const total = amalTotal + aiswaryaTotal
+  const total1 = useMemo(() => monthExpenses.filter(e => e.paid_by === member1).reduce((s, e) => s + e.amount, 0), [monthExpenses, member1])
+  const total2 = useMemo(() => monthExpenses.filter(e => e.paid_by === member2).reduce((s, e) => s + e.amount, 0), [monthExpenses, member2])
+  const total  = total1 + total2
 
   const activeFilters = (filterPerson !== 'all' ? 1 : 0) + (filterCategory !== 'all' ? 1 : 0)
 
@@ -113,12 +113,12 @@ export default function Expenses({ monthExpenses, month, setMonth, year, setYear
             <p className="text-sm font-bold text-slate-800">{fmt(total)}</p>
           </div>
           <div className="card p-3 text-center border-t-2 border-blue-400">
-            <p className="text-[11px] text-blue-500 font-medium">👨 Amal</p>
-            <p className="text-sm font-bold text-blue-600">{fmt(amalTotal)}</p>
+            <p className="text-[11px] text-blue-500 font-medium">{emoji1} {member1}</p>
+            <p className="text-sm font-bold text-blue-600">{fmt(total1)}</p>
           </div>
           <div className="card p-3 text-center border-t-2 border-pink-400">
-            <p className="text-[11px] text-pink-500 font-medium">👩 Aiswarya</p>
-            <p className="text-sm font-bold text-pink-600">{fmt(aiswaryaTotal)}</p>
+            <p className="text-[11px] text-pink-500 font-medium">{emoji2} {member2}</p>
+            <p className="text-sm font-bold text-pink-600">{fmt(total2)}</p>
           </div>
         </div>
 
@@ -161,7 +161,7 @@ export default function Expenses({ monthExpenses, month, setMonth, year, setYear
             <div>
               <label className="label">Person</label>
               <div className="flex gap-2">
-                {[['all', 'Everyone'], ['Amal', '👨 Amal'], ['Aiswarya', '👩 Aiswarya']].map(([v, l]) => (
+                {[['all', 'Everyone'], [member1, `${emoji1} ${member1}`], [member2, `${emoji2} ${member2}`]].map(([v, l]) => (
                   <button key={v} onClick={() => setFilterPerson(v)}
                           className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all duration-150 border ${
                             filterPerson === v
@@ -207,7 +207,7 @@ export default function Expenses({ monthExpenses, month, setMonth, year, setYear
                   <div className="h-px flex-1 bg-slate-200" />
                 </div>
                 {items.map(e => (
-                  <ExpenseItem key={e.id} expense={e} onDelete={onRefresh} onEdit={onEditExpense} />
+                  <ExpenseItem key={e.id} expense={e} onDelete={onRefresh} onEdit={onEditExpense} member1={member1} />
                 ))}
               </div>
             ))}

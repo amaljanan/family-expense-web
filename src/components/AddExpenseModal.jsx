@@ -4,14 +4,14 @@ import { CATEGORIES } from '../data/categories'
 
 const TODAY = new Date().toISOString().split('T')[0]
 
-export default function AddExpenseModal({ onClose, onSave, initialData }) {
+export default function AddExpenseModal({ onClose, onSave, initialData, member1 = 'Amal', member2 = 'Aiswarya', emoji1 = '👨', emoji2 = '👩' }) {
   const isEditing = !!initialData
 
   const [form, setForm] = useState({
     amount: initialData?.amount?.toString() ?? '',
     category: initialData?.category ?? '',
     description: initialData?.description ?? '',
-    paid_by: initialData?.paid_by ?? 'Amal',
+    paid_by: initialData?.paid_by ?? member1,
     expense_date: initialData?.expense_date ?? TODAY,
   })
   const [saving, setSaving] = useState(false)
@@ -128,8 +128,8 @@ export default function AddExpenseModal({ onClose, onSave, initialData }) {
             <label className="label">Paid by</label>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { name: 'Amal',     emoji: '👨', active: 'bg-blue-50 border-blue-400 text-blue-700' },
-                { name: 'Aiswarya', emoji: '👩', active: 'bg-pink-50 border-pink-400 text-pink-700' },
+                { name: member1, emoji: emoji1, active: 'bg-blue-50 border-blue-400 text-blue-700' },
+                { name: member2, emoji: emoji2, active: 'bg-pink-50 border-pink-400 text-pink-700' },
               ].map(p => (
                 <button key={p.name} onClick={() => set('paid_by', p.name)}
                         className={`py-3 rounded-xl border font-semibold transition-all duration-150 active:scale-95 text-sm ${

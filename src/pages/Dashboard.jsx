@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { TrendingDown, TrendingUp, Wallet, PiggyBank, Plus, ArrowRight } from 'lucide-react'
+import { TrendingDown, TrendingUp, Wallet, PiggyBank, Plus, ArrowRight, KeyRound } from 'lucide-react'
 import { fmt, pct, MONTHS, dateLabel } from '../utils/format'
 import { getCategoryById } from '../data/categories'
 import MonthSelector from '../components/MonthSelector'
@@ -89,12 +89,12 @@ function RecentItem({ expense }) {
   )
 }
 
-export default function Dashboard({ monthExpenses, amalSalary, aiswaryaSalary, month, setMonth, year, setYear, onAddExpense }) {
-  const totalSalary = amalSalary + aiswaryaSalary
-  const amalSpent   = useMemo(() => monthExpenses.filter(e => e.paid_by === 'Amal').reduce((s, e) => s + e.amount, 0), [monthExpenses])
-  const aiswaryaSpent = useMemo(() => monthExpenses.filter(e => e.paid_by === 'Aiswarya').reduce((s, e) => s + e.amount, 0), [monthExpenses])
-  const totalSpent  = amalSpent + aiswaryaSpent
-  const totalSavings = Math.max(0, totalSalary - totalSpent)
+export default function Dashboard({ monthExpenses, salary1, salary2, member1, member2, emoji1, emoji2, familyName, month, setMonth, year, setYear, onAddExpense, onChangePw }) {
+  const totalSalary   = salary1 + salary2
+  const spent1        = useMemo(() => monthExpenses.filter(e => e.paid_by === member1).reduce((s, e) => s + e.amount, 0), [monthExpenses, member1])
+  const spent2        = useMemo(() => monthExpenses.filter(e => e.paid_by === member2).reduce((s, e) => s + e.amount, 0), [monthExpenses, member2])
+  const totalSpent    = spent1 + spent2
+  const totalSavings  = Math.max(0, totalSalary - totalSpent)
 
   const categoryData = useMemo(() => {
     const map = {}
@@ -112,13 +112,20 @@ export default function Dashboard({ monthExpenses, amalSalary, aiswaryaSalary, m
         <div className="flex items-start justify-between">
           <div>
             <p className="text-blue-200 text-sm">Welcome back,</p>
-            <h1 className="text-2xl font-bold text-white mt-0.5">Amal & Aiswarya 👋</h1>
+            <h1 className="text-2xl font-bold text-white mt-0.5">{familyName} 👋</h1>
             <p className="text-blue-200/70 text-xs mt-1">{MONTHS[month - 1]} {year} Overview</p>
           </div>
-          <button onClick={onAddExpense}
-                  className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors duration-150">
-            <Plus className="w-5 h-5 text-white" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={onChangePw}
+                    title="Change password"
+                    className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors duration-150">
+              <KeyRound className="w-4 h-4 text-white" />
+            </button>
+            <button onClick={onAddExpense}
+                    className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors duration-150">
+              <Plus className="w-5 h-5 text-white" />
+            </button>
+          </div>
         </div>
 
         {/* Total spent hero */}
@@ -165,10 +172,10 @@ export default function Dashboard({ monthExpenses, amalSalary, aiswaryaSalary, m
 
         {/* Person cards */}
         <div className="flex gap-3">
-          <PersonCard name="Amal" spent={amalSpent} salary={amalSalary}
-                      color="#2563eb" bgColor="bg-blue-100" emoji="👨" />
-          <PersonCard name="Aiswarya" spent={aiswaryaSpent} salary={aiswaryaSalary}
-                      color="#db2777" bgColor="bg-pink-100" emoji="👩" />
+          <PersonCard name={member1} spent={spent1} salary={salary1}
+                      color="#2563eb" bgColor="bg-blue-100" emoji={emoji1} />
+          <PersonCard name={member2} spent={spent2} salary={salary2}
+                      color="#db2777" bgColor="bg-pink-100" emoji={emoji2} />
         </div>
 
         {/* Category spending */}

@@ -119,11 +119,11 @@ function CategoryList({ breakdown, total, emptyMsg = 'No expenses' }) {
 }
 
 // ─── Monthly View ────────────────────────────────────────────────────────────
-function MonthlyView({ monthExpenses, amalSalary, aiswaryaSalary, month, year, expenses }) {
-  const totalSalary   = amalSalary + aiswaryaSalary
-  const amalSpent     = useMemo(() => monthExpenses.filter(e => e.paid_by === 'Amal').reduce((s, e) => s + e.amount, 0), [monthExpenses])
-  const aiswaryaSpent = useMemo(() => monthExpenses.filter(e => e.paid_by === 'Aiswarya').reduce((s, e) => s + e.amount, 0), [monthExpenses])
-  const totalSpent    = amalSpent + aiswaryaSpent
+function MonthlyView({ monthExpenses, salary1, salary2, month, year, expenses, member1, member2, emoji1, emoji2 }) {
+  const totalSalary = salary1 + salary2
+  const spent1      = useMemo(() => monthExpenses.filter(e => e.paid_by === member1).reduce((s, e) => s + e.amount, 0), [monthExpenses, member1])
+  const spent2      = useMemo(() => monthExpenses.filter(e => e.paid_by === member2).reduce((s, e) => s + e.amount, 0), [monthExpenses, member2])
+  const totalSpent  = spent1 + spent2
   const totalSaved    = Math.max(0, totalSalary - totalSpent)
   const spendPct      = totalSalary > 0 ? Math.round((totalSpent  / totalSalary) * 100) : null
   const savePct       = totalSalary > 0 ? Math.round((totalSaved  / totalSalary) * 100) : null
@@ -140,12 +140,12 @@ function MonthlyView({ monthExpenses, amalSalary, aiswaryaSalary, month, year, e
     for (let i = 5; i >= 0; i--) {
       const d = new Date(year, month - 1 - i, 1)
       const m = d.getMonth() + 1, y = d.getFullYear()
-      const amal     = expenses.filter(e => { const ed = new Date(e.expense_date); return e.paid_by === 'Amal'     && ed.getMonth() + 1 === m && ed.getFullYear() === y }).reduce((s, e) => s + e.amount, 0)
-      const aiswarya = expenses.filter(e => { const ed = new Date(e.expense_date); return e.paid_by === 'Aiswarya' && ed.getMonth() + 1 === m && ed.getFullYear() === y }).reduce((s, e) => s + e.amount, 0)
-      result.push({ label: shortMonth(m), total: amal + aiswarya, amal, aiswarya })
+      const s1 = expenses.filter(e => { const ed = new Date(e.expense_date); return e.paid_by === member1 && ed.getMonth() + 1 === m && ed.getFullYear() === y }).reduce((s, e) => s + e.amount, 0)
+      const s2 = expenses.filter(e => { const ed = new Date(e.expense_date); return e.paid_by === member2 && ed.getMonth() + 1 === m && ed.getFullYear() === y }).reduce((s, e) => s + e.amount, 0)
+      result.push({ label: shortMonth(m), total: s1 + s2, [member1]: s1, [member2]: s2 })
     }
     return result
-  }, [expenses, month, year])
+  }, [expenses, month, year, member1, member2])
 
   const prevMonthSpent = monthlyTrend[monthlyTrend.length - 2]?.total ?? 0
   const vsLastMonth    = prevMonthSpent > 0 ? Math.round(((totalSpent - prevMonthSpent) / prevMonthSpent) * 100) : null
@@ -174,8 +174,8 @@ function MonthlyView({ monthExpenses, amalSalary, aiswaryaSalary, month, year, e
         <div className="p-4 space-y-3">
           {/* Salary rows */}
           {[
-            { label: "👨 Amal's Salary",     value: amalSalary,     color: '#2563eb', show: amalSalary > 0 },
-            { label: "👩 Aiswarya's Salary",  value: aiswaryaSalary, color: '#db2777', show: aiswaryaSalary > 0 },
+            { label: `${emoji1} ${member1}'s Salary`, value: salary1, color: '#2563eb', show: salary1 > 0 },
+            { label: `${emoji2} ${member2}'s Salary`, value: salary2, color: '#db2777', show: salary2 > 0 },
           ].filter(r => r.show).map(row => (
             <div key={row.label} className="flex justify-between">
               <span className="text-sm text-slate-500">{row.label}</span>
@@ -208,11 +208,11 @@ function MonthlyView({ monthExpenses, amalSalary, aiswaryaSalary, month, year, e
 
       {/* Person comparison */}
       <div className="card p-4">
-        <SectionTitle title="👨 Amal vs 👩 Aiswarya" sub="Spending comparison this month" />
+        <SectionTitle title={`${emoji1} ${member1} vs ${emoji2} ${member2}`} sub="Spending comparison this month" />
         <div className="grid grid-cols-2 gap-3 mb-1">
           {[
-            { name: 'Amal',     spent: amalSpent,     salary: amalSalary,     color: '#2563eb', bg: 'bg-blue-50',  border: 'border-blue-200', emoji: '👨' },
-            { name: 'Aiswarya', spent: aiswaryaSpent, salary: aiswaryaSalary, color: '#db2777', bg: 'bg-pink-50',  border: 'border-pink-200', emoji: '👩' },
+            { name: member1, spent: spent1, salary: salary1, color: '#2563eb', bg: 'bg-blue-50', border: 'border-blue-200', emoji: emoji1 },
+            { name: member2, spent: spent2, salary: salary2, color: '#db2777', bg: 'bg-pink-50', border: 'border-pink-200', emoji: emoji2 },
           ].map(p => (
             <div key={p.name} className={`${p.bg} border ${p.border} rounded-2xl p-3`}>
               <p className="text-base mb-1">{p.emoji} <span className="text-sm font-semibold text-slate-700">{p.name}</span></p>
@@ -266,7 +266,7 @@ function MonthlyView({ monthExpenses, amalSalary, aiswaryaSalary, month, year, e
 
       {/* 6-month trend */}
       <div className="card p-4">
-        <SectionTitle title="6-Month Spending Trend" sub="Amal & Aiswarya combined" />
+        <SectionTitle title="6-Month Spending Trend" sub={`${member1} & ${member2} combined`} />
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={monthlyTrend} barSize={14} barGap={2}>
@@ -275,14 +275,14 @@ function MonthlyView({ monthExpenses, amalSalary, aiswaryaSalary, month, year, e
               <YAxis tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false}
                      tickFormatter={v => `₹${(v/1000).toFixed(0)}k`} width={38} />
               <Tooltip contentStyle={TOOLTIP} formatter={v => fmt(v)} />
-              <Bar dataKey="amal"     name="Amal"     fill="#2563eb" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="aiswarya" name="Aiswarya" fill="#db2777" radius={[4, 4, 0, 0]} />
+              <Bar dataKey={member1} name={member1} fill="#2563eb" radius={[4, 4, 0, 0]} />
+              <Bar dataKey={member2} name={member2} fill="#db2777" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
         <div className="flex gap-4 mt-2 justify-center text-xs">
-          <span className="flex items-center gap-1.5 text-slate-500"><span className="w-3 h-3 rounded bg-blue-600 inline-block" /> Amal</span>
-          <span className="flex items-center gap-1.5 text-slate-500"><span className="w-3 h-3 rounded bg-pink-600 inline-block" /> Aiswarya</span>
+          <span className="flex items-center gap-1.5 text-slate-500"><span className="w-3 h-3 rounded bg-blue-600 inline-block" /> {member1}</span>
+          <span className="flex items-center gap-1.5 text-slate-500"><span className="w-3 h-3 rounded bg-pink-600 inline-block" /> {member2}</span>
         </div>
       </div>
 
@@ -300,15 +300,15 @@ function MonthlyView({ monthExpenses, amalSalary, aiswaryaSalary, month, year, e
                 </div>
               </div>
             )}
-            {amalSpent !== aiswaryaSpent && (
-              <div className={`flex items-start gap-3 p-3 rounded-xl border ${amalSpent > aiswaryaSpent ? 'bg-blue-50 border-blue-100' : 'bg-pink-50 border-pink-100'}`}>
-                <span className="text-2xl">{amalSpent > aiswaryaSpent ? '👨' : '👩'}</span>
+            {spent1 !== spent2 && (
+              <div className={`flex items-start gap-3 p-3 rounded-xl border ${spent1 > spent2 ? 'bg-blue-50 border-blue-100' : 'bg-pink-50 border-pink-100'}`}>
+                <span className="text-2xl">{spent1 > spent2 ? emoji1 : emoji2}</span>
                 <div>
                   <p className="text-sm font-semibold text-slate-800">
-                    {amalSpent > aiswaryaSpent ? 'Amal' : 'Aiswarya'} spent more this month
+                    {spent1 > spent2 ? member1 : member2} spent more this month
                   </p>
                   <p className="text-xs text-slate-500">
-                    {fmt(Math.abs(amalSpent - aiswaryaSpent))} more than {amalSpent > aiswaryaSpent ? 'Aiswarya' : 'Amal'}
+                    {fmt(Math.abs(spent1 - spent2))} more than {spent1 > spent2 ? member2 : member1}
                   </p>
                 </div>
               </div>
@@ -343,7 +343,7 @@ function MonthlyView({ monthExpenses, amalSalary, aiswaryaSalary, month, year, e
 }
 
 // ─── Weekly View ──────────────────────────────────────────────────────────────
-function WeeklyView({ monthExpenses, month, year, amalSalary, aiswaryaSalary }) {
+function WeeklyView({ monthExpenses, month, year, salary1, salary2, member1, member2, emoji1, emoji2 }) {
   const weeks = useMemo(() => getWeeks(year, month), [year, month])
   const [weekIdx, setWeekIdx] = useState(() => currentWeekIndex(year, month))
 
@@ -356,9 +356,9 @@ function WeeklyView({ monthExpenses, month, year, amalSalary, aiswaryaSalary }) 
     }),
   [monthExpenses, selWeek])
 
-  const amalWeek     = useMemo(() => weekExpenses.filter(e => e.paid_by === 'Amal').reduce((s, e) => s + e.amount, 0), [weekExpenses])
-  const aiswaryaWeek = useMemo(() => weekExpenses.filter(e => e.paid_by === 'Aiswarya').reduce((s, e) => s + e.amount, 0), [weekExpenses])
-  const totalWeek    = amalWeek + aiswaryaWeek
+  const week1     = useMemo(() => weekExpenses.filter(e => e.paid_by === member1).reduce((s, e) => s + e.amount, 0), [weekExpenses, member1])
+  const week2     = useMemo(() => weekExpenses.filter(e => e.paid_by === member2).reduce((s, e) => s + e.amount, 0), [weekExpenses, member2])
+  const totalWeek = week1 + week2
 
   // Day-by-day data for selected week
   const dailyData = useMemo(() => {
@@ -366,9 +366,9 @@ function WeeklyView({ monthExpenses, month, year, amalSalary, aiswaryaSalary }) 
     for (let day = selWeek.start; day <= selWeek.end; day++) {
       const date = new Date(year, month - 1, day)
       const dayLabel = DAY_LABELS[date.getDay()]
-      const amal     = weekExpenses.filter(e => new Date(e.expense_date).getDate() === day && e.paid_by === 'Amal').reduce((s, e) => s + e.amount, 0)
-      const aiswarya = weekExpenses.filter(e => new Date(e.expense_date).getDate() === day && e.paid_by === 'Aiswarya').reduce((s, e) => s + e.amount, 0)
-      data.push({ day: `${dayLabel} ${day}`, amal, aiswarya, total: amal + aiswarya })
+      const s1 = weekExpenses.filter(e => new Date(e.expense_date).getDate() === day && e.paid_by === member1).reduce((s, e) => s + e.amount, 0)
+      const s2 = weekExpenses.filter(e => new Date(e.expense_date).getDate() === day && e.paid_by === member2).reduce((s, e) => s + e.amount, 0)
+      data.push({ day: `${dayLabel} ${day}`, [member1]: s1, [member2]: s2, total: s1 + s2 })
     }
     return data
   }, [weekExpenses, selWeek, year, month])
@@ -433,8 +433,8 @@ function WeeklyView({ monthExpenses, month, year, amalSalary, aiswaryaSalary }) 
         </div>
         <div className="grid grid-cols-2 divide-x divide-slate-100 p-0">
           {[
-            { name: 'Amal', amount: amalWeek, color: '#2563eb', bg: 'bg-blue-50', emoji: '👨' },
-            { name: 'Aiswarya', amount: aiswaryaWeek, color: '#db2777', bg: 'bg-pink-50', emoji: '👩' },
+            { name: member1, amount: week1, color: '#2563eb', bg: 'bg-blue-50', emoji: emoji1 },
+            { name: member2, amount: week2, color: '#db2777', bg: 'bg-pink-50', emoji: emoji2 },
           ].map(p => (
             <div key={p.name} className={`${p.bg} p-3 text-center`}>
               <p className="text-xs text-slate-500">{p.emoji} {p.name}</p>
@@ -460,14 +460,14 @@ function WeeklyView({ monthExpenses, month, year, amalSalary, aiswaryaSalary }) 
                   <YAxis tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false}
                          tickFormatter={v => `₹${(v/1000).toFixed(0)}k`} width={36} />
                   <Tooltip contentStyle={TOOLTIP} formatter={v => fmt(v)} />
-                  <Bar dataKey="amal"     name="Amal"     fill="#2563eb" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="aiswarya" name="Aiswarya" fill="#db2777" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey={member1} name={member1} fill="#2563eb" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey={member2} name={member2} fill="#db2777" radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
             <div className="flex gap-4 mt-1 justify-center text-xs">
-              <span className="flex items-center gap-1.5 text-slate-500"><span className="w-3 h-3 rounded bg-blue-600 inline-block" /> Amal</span>
-              <span className="flex items-center gap-1.5 text-slate-500"><span className="w-3 h-3 rounded bg-pink-600 inline-block" /> Aiswarya</span>
+              <span className="flex items-center gap-1.5 text-slate-500"><span className="w-3 h-3 rounded bg-blue-600 inline-block" /> {member1}</span>
+              <span className="flex items-center gap-1.5 text-slate-500"><span className="w-3 h-3 rounded bg-pink-600 inline-block" /> {member2}</span>
             </div>
           </>
         )}
@@ -483,7 +483,7 @@ function WeeklyView({ monthExpenses, month, year, amalSalary, aiswaryaSalary }) 
 }
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
-export default function Analytics({ expenses, monthExpenses, amalSalary, aiswaryaSalary, month, setMonth, year, setYear }) {
+export default function Analytics({ expenses, monthExpenses, salary1, salary2, month, setMonth, year, setYear, member1 = 'Amal', member2 = 'Aiswarya', emoji1 = '👨', emoji2 = '👩' }) {
   const [tab, setTab] = useState('Monthly')
 
   return (
@@ -499,14 +499,16 @@ export default function Analytics({ expenses, monthExpenses, amalSalary, aiswary
 
         {tab === 'Monthly' && (
           <MonthlyView
-            monthExpenses={monthExpenses} amalSalary={amalSalary} aiswaryaSalary={aiswaryaSalary}
+            monthExpenses={monthExpenses} salary1={salary1} salary2={salary2}
             month={month} year={year} expenses={expenses}
+            member1={member1} member2={member2} emoji1={emoji1} emoji2={emoji2}
           />
         )}
         {tab === 'Weekly' && (
           <WeeklyView
             monthExpenses={monthExpenses} month={month} year={year}
-            amalSalary={amalSalary} aiswaryaSalary={aiswaryaSalary}
+            salary1={salary1} salary2={salary2}
+            member1={member1} member2={member2} emoji1={emoji1} emoji2={emoji2}
           />
         )}
       </div>

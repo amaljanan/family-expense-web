@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { fmt, MONTHS } from '../utils/format'
 import MonthSelector from '../components/MonthSelector'
 
-function SalaryEntry({ person, salary, month, year, onRefresh, color, bgColor, emoji }) {
+function SalaryEntry({ person, salary, month, year, onRefresh, color, bgColor, emoji, familyId }) {
   const [editing, setEditing] = useState(!salary)
   const [value, setValue] = useState(salary?.toString() ?? '')
   const [saving, setSaving] = useState(false)
@@ -15,7 +15,8 @@ function SalaryEntry({ person, salary, month, year, onRefresh, color, bgColor, e
     if (!value || isNaN(amt) || amt <= 0) { setError('Enter a valid amount'); return }
     setSaving(true); setError(null)
     const { error: err } = await supabase.from('salaries').upsert(
-      { person, month, year, amount: amt }, { onConflict: 'person,month,year' }
+      { person, month, year, amount: amt, family_id: familyId },
+      { onConflict: 'family_id,person,month,year' }
     )
     if (err) setError(err.message)
     else { await onRefresh(); setEditing(false) }
@@ -102,13 +103,13 @@ function SalaryHistory({ salaries, person, color }) {
   )
 }
 
-export default function Salary({ salaries, month, setMonth, year, setYear, onRefresh }) {
+export default function Salary({ salaries, month, setMonth, year, setYear, onRefresh, member1 = 'Amal', member2 = 'Aiswarya', emoji1 = '👨', emoji2 = '👩', familyId }) {
   const getSalaryFor = (person) =>
     salaries.find(s => s.person === person && s.month === month && s.year === year)?.amount ?? 0
 
-  const amalSalary     = getSalaryFor('Amal')
-  const aiswaryaSalary = getSalaryFor('Aiswarya')
-  const combined = amalSalary + aiswaryaSalary
+  const salary1  = getSalaryFor(member1)
+  const salary2  = getSalaryFor(member2)
+  const combined = salary1 + salary2
 
   return (
     <div className="animate-fade-in">
@@ -136,16 +137,16 @@ export default function Salary({ salaries, month, setMonth, year, setYear, onRef
           </div>
         )}
 
-        <SalaryEntry person="Amal"     salary={amalSalary}     month={month} year={year}
-                     onRefresh={onRefresh} color="#2563eb" bgColor="bg-blue-100" emoji="👨" />
-        <SalaryEntry person="Aiswarya" salary={aiswaryaSalary} month={month} year={year}
-                     onRefresh={onRefresh} color="#db2777" bgColor="bg-pink-100" emoji="👩" />
+        <SalaryEntry person={member1} salary={salary1} month={month} year={year} familyId={familyId}
+                     onRefresh={onRefresh} color="#2563eb" bgColor="bg-blue-100" emoji={emoji1} />
+        <SalaryEntry person={member2} salary={salary2} month={month} year={year} familyId={familyId}
+                     onRefresh={onRefresh} color="#db2777" bgColor="bg-pink-100" emoji={emoji2} />
 
         {salaries.length > 0 && (
           <div className="card p-4 space-y-4">
             <h3 className="text-sm font-semibold text-slate-800">Salary History</h3>
-            <SalaryHistory salaries={salaries} person="Amal"     color="#2563eb" />
-            <SalaryHistory salaries={salaries} person="Aiswarya" color="#db2777" />
+            <SalaryHistory salaries={salaries} person={member1} color="#2563eb" />
+            <SalaryHistory salaries={salaries} person={member2} color="#db2777" />
           </div>
         )}
 
