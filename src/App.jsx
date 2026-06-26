@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './lib/supabase'
-import { getFamily, setFamily as persistFamily } from './lib/auth'
+import { getFamily, setFamily as persistFamily, logout } from './lib/auth'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Expenses from './pages/Expenses'
@@ -38,7 +38,7 @@ function ErrorBanner({ msg }) {
   )
 }
 
-function AppShell({ family }) {
+function AppShell({ family, onLogout }) {
   const { id: familyId, family_name: familyName, member1, member2, member1_emoji: emoji1, member2_emoji: emoji2 } = family
 
   const now = new Date()
@@ -92,6 +92,7 @@ function AppShell({ family }) {
     onEditExpense:  (expense) => setEditingExpense(expense),
     onRefresh:      fetchAll,
     onChangePw:     () => setShowChangePw(true),
+    onLogout:       () => { logout(); onLogout() },
   }
 
   if (loading) return <LoadingScreen />
@@ -148,5 +149,5 @@ export default function App() {
   if (!family) {
     return <Login onSuccess={(fam) => { persistFamily(fam); setFamilyState(fam) }} />
   }
-  return <AppShell family={family} />
+  return <AppShell family={family} onLogout={() => setFamilyState(null)} />
 }

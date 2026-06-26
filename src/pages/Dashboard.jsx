@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { TrendingDown, TrendingUp, Wallet, PiggyBank, Plus, ArrowRight, KeyRound } from 'lucide-react'
+import { TrendingDown, TrendingUp, Wallet, PiggyBank, Plus, ArrowRight, KeyRound, LogOut } from 'lucide-react'
 import { fmt, pct, MONTHS, dateLabel } from '../utils/format'
 import { getCategoryById } from '../data/categories'
 import MonthSelector from '../components/MonthSelector'
@@ -89,7 +89,7 @@ function RecentItem({ expense }) {
   )
 }
 
-export default function Dashboard({ monthExpenses, salary1, salary2, member1, member2, emoji1, emoji2, familyName, month, setMonth, year, setYear, onAddExpense, onChangePw }) {
+export default function Dashboard({ monthExpenses, salary1, salary2, member1, member2, emoji1, emoji2, familyName, month, setMonth, year, setYear, onAddExpense, onChangePw, onLogout }) {
   const totalSalary   = salary1 + salary2
   const spent1        = useMemo(() => monthExpenses.filter(e => e.paid_by === member1).reduce((s, e) => s + e.amount, 0), [monthExpenses, member1])
   const spent2        = useMemo(() => monthExpenses.filter(e => e.paid_by === member2).reduce((s, e) => s + e.amount, 0), [monthExpenses, member2])
@@ -116,10 +116,13 @@ export default function Dashboard({ monthExpenses, salary1, salary2, member1, me
             <p className="text-blue-200/70 text-xs mt-1">{MONTHS[month - 1]} {year} Overview</p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={onChangePw}
-                    title="Change password"
+            <button onClick={onChangePw} title="Change password"
                     className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors duration-150">
               <KeyRound className="w-4 h-4 text-white" />
+            </button>
+            <button onClick={onLogout} title="Logout"
+                    className="w-10 h-10 bg-white/20 hover:bg-red-500/60 rounded-full flex items-center justify-center transition-colors duration-150">
+              <LogOut className="w-4 h-4 text-white" />
             </button>
             <button onClick={onAddExpense}
                     className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors duration-150">
