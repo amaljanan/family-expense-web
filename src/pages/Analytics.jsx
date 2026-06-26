@@ -3,7 +3,7 @@ import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
 } from 'recharts'
-import { Pencil, Trash2, Check } from 'lucide-react'
+import { Pencil, Trash2, Check, X } from 'lucide-react'
 import { fmt, pct, MONTHS, shortMonth } from '../utils/format'
 import { getCategoryById, CATEGORIES } from '../data/categories'
 import MonthSelector from '../components/MonthSelector'
@@ -59,7 +59,7 @@ function SectionTitle({ title, sub }) {
   )
 }
 
-// Category list with optional budget badges
+// ─── Category list with budget status ────────────────────────────────────────
 function CategoryList({ breakdown, total, budgets = [], emptyMsg = 'No expenses' }) {
   if (breakdown.length === 0) {
     return <p className="text-sm text-slate-400 text-center py-6">{emptyMsg}</p>
@@ -69,57 +69,72 @@ function CategoryList({ breakdown, total, budgets = [], emptyMsg = 'No expenses'
     <div className="space-y-3">
       {breakdown.map((c, i) => {
         const sharePct = pct(c.value, total)
-        const barWidth  = pct(c.value, top)
-        const isTop     = i === 0
-        const budget    = budgets.find(b => b.category_id === c.id)
-        const limit     = budget ? parseFloat(budget.monthly_limit) : null
-        const isOver    = limit !== null && c.value > limit
-        const isNear    = limit !== null && !isOver && c.value > limit * 0.8
-        const usedPct   = limit !== null ? Math.min(100, Math.round((c.value / limit) * 100)) : null
+        const barWidth = pct(c.value, top)
+        const budget   = budgets.find(b => b.category_id === c.id)
+        const limit    = budget ? parseFloat(budget.monthly_limit) : null
+        const isOver   = limit !== null && c.value > limit
+        const isNear   = limit !== null && !isOver && c.value > limit * 0.8
+        const usedPct  = limit !== null ? Math.min(100, Math.round((c.value / limit) * 100)) : null
 
         return (
           <div key={c.id}
                className={`p-3 rounded-xl border transition-all duration-200 ${
-                 isOver  ? 'border-red-200 bg-red-50/30' :
-                 isNear  ? 'border-amber-200 bg-amber-50/30' :
-                 isTop   ? 'border-orange-200 bg-orange-50' :
-                           'border-slate-100 bg-white hover:border-slate-200'
+                 isOver ? 'border-red-300 bg-red-50/50' :
+                 isNear ? 'border-amber-300 bg-amber-50/50' :
+                 i === 0 ? 'border-orange-200 bg-orange-50' :
+                           'border-slate-100 bg-white'
                }`}>
             <div className="flex items-center gap-3">
+              {/* Rank badge */}
               <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 ${
                 i === 0 ? 'bg-orange-400 text-white' :
                 i === 1 ? 'bg-slate-300 text-slate-700' :
-                i === 2 ? 'bg-amber-500/70 text-white' :
-                          'bg-slate-100 text-slate-400'
+                i === 2 ? 'bg-amber-500/70 text-white' : 'bg-slate-100 text-slate-400'
               }`}>{i + 1}</span>
 
+              {/* Icon */}
               <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
                    style={{ backgroundColor: c.color + '18' }}>
                 {c.emoji}
               </div>
 
               <div className="flex-1 min-w-0">
+                {/* Name + amount */}
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-sm font-semibold text-slate-800 truncate">{c.label}</span>
-                  <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                  <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
                     <span className="text-sm font-bold text-slate-900">{fmt(c.value)}</span>
                     {limit !== null && (
                       <span className="text-[10px] text-slate-400">/ {fmt(limit)}</span>
                     )}
+                    {/* Over-budget badge */}
+                    {isOver && (
+                      <span className="text-[9px] font-bold bg-red-500 text-white px-1.5 py-0.5 rounded-full">
+                        OVER
+                      </span>
+                    )}
+                    {isNear && !isOver && (
+                      <span className="text-[9px] font-bold bg-amber-400 text-white px-1.5 py-0.5 rounded-full">
+                        NEAR
+                      </span>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+
+                {/* Spend bar (relative to highest) */}
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
                     <div className="h-full rounded-full transition-all duration-500"
                          style={{ width: `${barWidth}%`, backgroundColor: c.color }} />
                   </div>
                   <span className="text-xs font-semibold flex-shrink-0"
                         style={{ color: c.color }}>{sharePct}%</span>
                 </div>
-                {/* Budget status line */}
+
+                {/* Budget progress bar */}
                 {limit !== null && (
-                  <div className="flex items-center justify-between mt-1.5">
-                    <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden mr-2">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                       <div className={`h-full rounded-full transition-all duration-500 ${
                         isOver ? 'bg-red-500' : isNear ? 'bg-amber-400' : 'bg-emerald-500'
                       }`} style={{ width: `${usedPct}%` }} />
@@ -128,8 +143,10 @@ function CategoryList({ breakdown, total, budgets = [], emptyMsg = 'No expenses'
                       isOver ? 'text-red-600' : isNear ? 'text-amber-600' : 'text-emerald-600'
                     }`}>
                       {isOver
-                        ? `⚠ ${fmt(c.value - limit)} over!`
-                        : `Budget ${usedPct}%`}
+                        ? `+${fmt(c.value - limit)} over`
+                        : isNear
+                          ? `${fmt(limit - c.value)} left`
+                          : `${fmt(limit - c.value)} left`}
                     </span>
                   </div>
                 )}
@@ -142,14 +159,112 @@ function CategoryList({ breakdown, total, budgets = [], emptyMsg = 'No expenses'
   )
 }
 
+// ─── BudgetRow — MUST be defined outside BudgetView to avoid remount on rerender
+function BudgetRow({ cat, isEditing, inputVal, saving, onToggleEdit, onInputChange, onKeyDown, onSave, onRemove }) {
+  const limit   = cat.budget ? parseFloat(cat.budget.monthly_limit) : null
+  const spent   = cat.spent
+  const usedPct = limit !== null ? Math.min(100, Math.round((spent / limit) * 100)) : 0
+  const isOver  = limit !== null && spent > limit
+  const isNear  = limit !== null && !isOver && spent > limit * 0.8
+
+  return (
+    <div className={`rounded-xl border overflow-hidden transition-all duration-200 ${
+      isOver ? 'border-red-200 bg-red-50/20' :
+      isNear ? 'border-amber-200 bg-amber-50/20' : 'border-slate-100 bg-white'
+    }`}>
+      {/* Main row */}
+      <button className="w-full flex items-center gap-3 p-3 text-left hover:bg-slate-50/70 transition-colors"
+              onClick={onToggleEdit}>
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+             style={{ backgroundColor: cat.color + '18' }}>
+          {cat.emoji}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-sm font-semibold text-slate-800 truncate">{cat.label}</span>
+            <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
+              <span className="text-sm font-bold text-slate-900">{fmt(spent)}</span>
+              {limit !== null && <span className="text-xs text-slate-400">/ {fmt(limit)}</span>}
+              {isOver && (
+                <span className="text-[9px] font-bold bg-red-500 text-white px-1.5 py-0.5 rounded-full">OVER</span>
+              )}
+              {isNear && !isOver && (
+                <span className="text-[9px] font-bold bg-amber-400 text-white px-1.5 py-0.5 rounded-full">NEAR</span>
+              )}
+            </div>
+          </div>
+          {limit !== null ? (
+            <>
+              <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div className={`h-full rounded-full transition-all duration-500 ${
+                  isOver ? 'bg-red-500' : isNear ? 'bg-amber-400' : 'bg-emerald-500'
+                }`} style={{ width: `${usedPct}%` }} />
+              </div>
+              <div className="flex justify-between mt-1">
+                <span className={`text-[10px] font-semibold ${
+                  isOver ? 'text-red-600' : isNear ? 'text-amber-600' : 'text-emerald-600'
+                }`}>
+                  {isOver ? `⚠ ${fmt(spent - limit)} over budget!` : `${usedPct}% of budget used`}
+                </span>
+                {!isOver && (
+                  <span className="text-[10px] text-slate-400">{fmt(limit - spent)} remaining</span>
+                )}
+              </div>
+            </>
+          ) : (
+            <span className="text-[11px] text-blue-500 font-medium">Tap to set monthly limit</span>
+          )}
+        </div>
+        <Pencil className="w-3.5 h-3.5 text-slate-300 flex-shrink-0" />
+      </button>
+
+      {/* Inline editor */}
+      {isEditing && (
+        <div className="px-3 pb-3 border-t border-slate-100 bg-slate-50/70">
+          <p className="text-xs text-slate-500 mt-2.5 mb-2">
+            Monthly limit for <b>{cat.label}</b>
+            {limit !== null && <span className="text-slate-400"> (current: {fmt(limit)})</span>}
+          </p>
+          <div className="flex gap-2">
+            <div className="flex items-center flex-1 bg-white border border-slate-200 rounded-xl
+                            focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+              <span className="pl-3 text-slate-400 font-semibold text-sm">₹</span>
+              <input
+                type="number" inputMode="decimal" placeholder="e.g. 10000"
+                value={inputVal}
+                onChange={e => onInputChange(e.target.value)}
+                onKeyDown={onKeyDown}
+                autoFocus
+                className="flex-1 bg-transparent py-2.5 px-2 text-sm font-bold text-slate-800 outline-none"
+              />
+            </div>
+            <button onClick={onSave} disabled={saving}
+                    className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl
+                               hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-1">
+              {saving ? '…' : <Check className="w-4 h-4" />}
+            </button>
+            {cat.budget && (
+              <button onClick={onRemove}
+                      className="p-2.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Budget View ──────────────────────────────────────────────────────────────
 function BudgetView({ monthExpenses, budgets, familyId, onBudgetRefresh, month, year }) {
   const [editing, setEditing]   = useState(null)
   const [inputVal, setInputVal] = useState('')
   const [saving, setSaving]     = useState(false)
+  const [saveErr, setSaveErr]   = useState(null)
   const [showAll, setShowAll]   = useState(false)
 
-  const getBudget  = (catId) => budgets.find(b => b.category_id === catId)
+  const getBudget = (catId) => budgets.find(b => b.category_id === catId)
 
   const spentMap = useMemo(() => {
     const m = {}
@@ -157,21 +272,33 @@ function BudgetView({ monthExpenses, budgets, familyId, onBudgetRefresh, month, 
     return m
   }, [monthExpenses])
 
-  const startEdit = (catId, currentLimit) => {
+  const startEdit  = (catId, currentLimit) => {
+    setSaveErr(null)
     setEditing(catId)
     setInputVal(currentLimit != null ? currentLimit.toString() : '')
   }
-  const cancelEdit = () => { setEditing(null); setInputVal('') }
+  const cancelEdit = () => { setEditing(null); setInputVal(''); setSaveErr(null) }
 
   const handleSave = async (catId) => {
     const amt = parseFloat(inputVal)
     if (!inputVal || isNaN(amt) || amt <= 0) { cancelEdit(); return }
     setSaving(true)
+    setSaveErr(null)
     const existing = getBudget(catId)
+    let err
     if (existing) {
-      await supabase.from('category_budgets').update({ monthly_limit: amt }).eq('id', existing.id)
+      const res = await supabase.from('category_budgets')
+        .update({ monthly_limit: amt }).eq('id', existing.id)
+      err = res.error
     } else {
-      await supabase.from('category_budgets').insert({ family_id: familyId, category_id: catId, monthly_limit: amt })
+      const res = await supabase.from('category_budgets')
+        .insert({ family_id: familyId, category_id: catId, monthly_limit: amt })
+      err = res.error
+    }
+    if (err) {
+      setSaveErr(err.message)
+      setSaving(false)
+      return
     }
     await onBudgetRefresh()
     setSaving(false)
@@ -181,7 +308,8 @@ function BudgetView({ monthExpenses, budgets, familyId, onBudgetRefresh, month, 
   const handleRemove = async (catId) => {
     const existing = getBudget(catId)
     if (!existing) return
-    await supabase.from('category_budgets').delete().eq('id', existing.id)
+    const { error: err } = await supabase.from('category_budgets').delete().eq('id', existing.id)
+    if (err) { setSaveErr(err.message); return }
     await onBudgetRefresh()
     cancelEdit()
   }
@@ -193,103 +321,44 @@ function BudgetView({ monthExpenses, budgets, familyId, onBudgetRefresh, month, 
     .filter(c => budgetCatIds.has(c.id) || spentCatIds.has(c.id))
     .map(c => ({ ...c, spent: spentMap[c.id] ?? 0, budget: getBudget(c.id) }))
     .sort((a, b) => {
-      const aLimit = a.budget ? parseFloat(a.budget.monthly_limit) : null
-      const bLimit = b.budget ? parseFloat(b.budget.monthly_limit) : null
-      if (aLimit && !bLimit) return -1
-      if (!aLimit && bLimit) return 1
+      if (a.budget && !b.budget) return -1
+      if (!a.budget && b.budget) return 1
       return b.spent - a.spent
     })
 
   const inactiveRows = CATEGORIES.filter(c => !budgetCatIds.has(c.id) && !spentCatIds.has(c.id))
 
-  // Summary stats
   const totalBudget      = budgets.reduce((s, b) => s + parseFloat(b.monthly_limit), 0)
   const totalBudgetSpent = budgets.reduce((s, b) => s + (spentMap[b.category_id] ?? 0), 0)
   const overCount        = budgets.filter(b => (spentMap[b.category_id] ?? 0) > parseFloat(b.monthly_limit)).length
+  const nearCount        = budgets.filter(b => {
+    const s = spentMap[b.category_id] ?? 0, l = parseFloat(b.monthly_limit)
+    return s > l * 0.8 && s <= l
+  }).length
   const budgetUsedPct    = totalBudget > 0 ? Math.min(100, Math.round((totalBudgetSpent / totalBudget) * 100)) : 0
-
-  const BudgetRow = ({ cat }) => {
-    const limit    = cat.budget ? parseFloat(cat.budget.monthly_limit) : null
-    const spent    = cat.spent
-    const usedPct  = limit ? Math.min(100, Math.round((spent / limit) * 100)) : 0
-    const isOver   = limit !== null && spent > limit
-    const isNear   = limit !== null && !isOver && spent > limit * 0.8
-    const isEdit   = editing === cat.id
-
-    return (
-      <div className={`rounded-xl border overflow-hidden transition-all duration-200 ${
-        isOver ? 'border-red-200' : isNear ? 'border-amber-200' : 'border-slate-100'
-      }`}>
-        <button className="w-full flex items-center gap-3 p-3 text-left hover:bg-slate-50/50 transition-colors"
-                onClick={() => isEdit ? cancelEdit() : startEdit(cat.id, limit)}>
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-               style={{ backgroundColor: cat.color + '18' }}>
-            {cat.emoji}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-semibold text-slate-800 truncate">{cat.label}</span>
-              <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
-                <span className="text-sm font-bold text-slate-900">{fmt(spent)}</span>
-                {limit !== null && <span className="text-xs text-slate-400">/ {fmt(limit)}</span>}
-              </div>
-            </div>
-            {limit !== null ? (
-              <>
-                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full transition-all duration-500 ${
-                    isOver ? 'bg-red-500' : isNear ? 'bg-amber-400' : 'bg-emerald-500'
-                  }`} style={{ width: `${usedPct}%` }} />
-                </div>
-                <div className="flex justify-between mt-1">
-                  <span className={`text-[10px] font-semibold ${
-                    isOver ? 'text-red-600' : isNear ? 'text-amber-600' : 'text-emerald-600'
-                  }`}>
-                    {isOver ? `⚠ ${fmt(spent - limit)} over!` : `${usedPct}% used`}
-                  </span>
-                  {!isOver && <span className="text-[10px] text-slate-400">{fmt(limit - spent)} left</span>}
-                </div>
-              </>
-            ) : (
-              <span className="text-[11px] text-blue-500 font-medium">Tap to set monthly limit</span>
-            )}
-          </div>
-          <Pencil className="w-3.5 h-3.5 text-slate-300 flex-shrink-0" />
-        </button>
-
-        {isEdit && (
-          <div className="px-3 pb-3 border-t border-slate-100 bg-slate-50/60">
-            <p className="text-xs text-slate-500 mt-2.5 mb-2">Monthly limit for <b>{cat.label}</b></p>
-            <div className="flex gap-2">
-              <div className="flex items-center flex-1 bg-white border border-slate-200 rounded-xl
-                              focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100">
-                <span className="pl-3 text-slate-400 font-semibold text-sm">₹</span>
-                <input type="number" inputMode="decimal" placeholder="e.g. 10000"
-                       value={inputVal} onChange={e => setInputVal(e.target.value)}
-                       onKeyDown={e => { if (e.key === 'Enter') handleSave(cat.id); if (e.key === 'Escape') cancelEdit() }}
-                       autoFocus
-                       className="flex-1 bg-transparent py-2.5 px-2 text-sm font-bold text-slate-800 outline-none" />
-              </div>
-              <button onClick={() => handleSave(cat.id)} disabled={saving}
-                      className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl
-                                 hover:bg-blue-700 disabled:opacity-50 transition-colors">
-                <Check className="w-4 h-4" />
-              </button>
-              {cat.budget && (
-                <button onClick={() => handleRemove(cat.id)}
-                        className="p-2.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    )
-  }
 
   return (
     <div className="space-y-4 pb-4">
+
+      {/* Error banner */}
+      {saveErr && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2">
+          <span className="text-red-500 text-lg flex-shrink-0">⚠</span>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-red-700">Failed to save</p>
+            <p className="text-xs text-red-500 mt-0.5">{saveErr}</p>
+            {saveErr.includes('does not exist') && (
+              <p className="text-xs text-red-400 mt-1">
+                Run <code className="bg-red-100 px-1 rounded">supabase_budgets_setup.sql</code> in your Supabase SQL editor first.
+              </p>
+            )}
+          </div>
+          <button onClick={() => setSaveErr(null)} className="text-red-300 hover:text-red-500">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Summary card */}
       {budgets.length > 0 ? (
         <div className="card overflow-hidden">
@@ -307,63 +376,65 @@ function BudgetView({ monthExpenses, budgets, familyId, onBudgetRefresh, month, 
                 totalBudgetSpent > totalBudget * 0.8 ? 'bg-amber-400' : 'bg-emerald-500'
               }`} style={{ width: `${budgetUsedPct}%` }} />
             </div>
-            <div className="flex justify-between text-xs">
+            <div className="flex justify-between text-xs mb-3">
               <span className="text-slate-500">{budgets.length} categories budgeted</span>
-              <div className="flex gap-3">
-                {overCount > 0 && (
-                  <span className="text-red-500 font-semibold">⚠ {overCount} over limit</span>
-                )}
-                <span className={`font-semibold ${
-                  budgetUsedPct > 100 ? 'text-red-600' :
-                  budgetUsedPct > 80  ? 'text-amber-600' : 'text-emerald-600'
-                }`}>{budgetUsedPct}% used</span>
-              </div>
+              <span className={`font-bold ${
+                budgetUsedPct > 100 ? 'text-red-600' :
+                budgetUsedPct > 80  ? 'text-amber-600' : 'text-emerald-600'
+              }`}>{budgetUsedPct}% used</span>
             </div>
-
-            {/* Per-budget quick stats */}
-            <div className="mt-3 pt-3 border-t border-slate-100 grid grid-cols-3 gap-2 text-center">
-              <div>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="bg-emerald-50 rounded-xl py-2">
                 <p className="text-lg font-bold text-emerald-600">
-                  {budgets.filter(b => (spentMap[b.category_id] ?? 0) <= parseFloat(b.monthly_limit) * 0.8).length}
+                  {budgets.length - overCount - nearCount}
                 </p>
-                <p className="text-[10px] text-slate-400">On track</p>
+                <p className="text-[10px] text-emerald-700 font-medium">On track</p>
               </div>
-              <div>
-                <p className="text-lg font-bold text-amber-500">
-                  {budgets.filter(b => {
-                    const s = spentMap[b.category_id] ?? 0
-                    const l = parseFloat(b.monthly_limit)
-                    return s > l * 0.8 && s <= l
-                  }).length}
-                </p>
-                <p className="text-[10px] text-slate-400">Near limit</p>
+              <div className="bg-amber-50 rounded-xl py-2">
+                <p className="text-lg font-bold text-amber-500">{nearCount}</p>
+                <p className="text-[10px] text-amber-700 font-medium">Near limit</p>
               </div>
-              <div>
+              <div className="bg-red-50 rounded-xl py-2">
                 <p className="text-lg font-bold text-red-500">{overCount}</p>
-                <p className="text-[10px] text-slate-400">Over limit</p>
+                <p className="text-[10px] text-red-700 font-medium">Over limit</p>
               </div>
             </div>
           </div>
         </div>
       ) : (
-        <div className="card p-5 text-center">
+        <div className="card p-5 text-center border-2 border-dashed border-slate-200">
           <p className="text-3xl mb-2">💰</p>
-          <p className="text-sm font-semibold text-slate-800 mb-1">No budgets set yet</p>
+          <p className="text-sm font-semibold text-slate-700 mb-1">No budget limits set</p>
           <p className="text-xs text-slate-400">Tap any category below to set a monthly spending limit</p>
         </div>
       )}
 
-      {/* Categories with activity or existing budgets */}
+      {/* Categories with activity or budgets */}
       <div className="card p-4">
         <SectionTitle
           title="Category Limits"
-          sub={activeRows.length > 0 ? 'Tap to set or edit · Green = on track · Red = over' : 'Set limits for any category below'}
+          sub="Tap a row to set or edit its monthly budget"
         />
         <div className="space-y-2">
           {activeRows.length === 0 && (
-            <p className="text-sm text-slate-400 text-center py-4">No expenses this month yet</p>
+            <p className="text-sm text-slate-400 text-center py-4">
+              No expenses this month yet. Expand "Other categories" below to set limits in advance.
+            </p>
           )}
-          {activeRows.map(cat => <BudgetRow key={cat.id} cat={cat} />)}
+          {activeRows.map(cat => (
+            <BudgetRow
+              key={cat.id}
+              cat={cat}
+              isEditing={editing === cat.id}
+              inputVal={editing === cat.id ? inputVal : ''}
+              saving={saving}
+              onToggleEdit={() => editing === cat.id ? cancelEdit() : startEdit(cat.id, cat.budget ? parseFloat(cat.budget.monthly_limit) : null)}
+              onInputChange={setInputVal}
+              onKeyDown={e => { if (e.key === 'Enter') handleSave(cat.id); if (e.key === 'Escape') cancelEdit() }}
+              onSave={() => handleSave(cat.id)}
+              onRemove={() => handleRemove(cat.id)}
+            />
+          ))}
         </div>
 
         {/* Inactive categories */}
@@ -377,36 +448,23 @@ function BudgetView({ monthExpenses, budgets, familyId, onBudgetRefresh, month, 
             </button>
             {showAll && (
               <div className="mt-3 space-y-1.5">
-                {inactiveRows.map(cat => (
-                  <div key={cat.id} className="rounded-xl border border-slate-100 overflow-hidden">
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 transition-colors"
-                            onClick={() => editing === cat.id ? cancelEdit() : startEdit(cat.id, null)}>
-                      <span className="text-base">{cat.emoji}</span>
-                      <span className="flex-1 text-sm text-slate-600 text-left">{cat.label}</span>
-                      <span className="text-xs text-blue-500 font-medium">+ Set limit</span>
-                    </button>
-                    {editing === cat.id && (
-                      <div className="px-3 pb-3 border-t border-slate-100 bg-slate-50/60">
-                        <div className="flex gap-2 mt-2">
-                          <div className="flex items-center flex-1 bg-white border border-slate-200 rounded-xl
-                                          focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100">
-                            <span className="pl-3 text-slate-400 text-sm">₹</span>
-                            <input type="number" inputMode="decimal" placeholder="Monthly limit"
-                                   value={inputVal} onChange={e => setInputVal(e.target.value)}
-                                   onKeyDown={e => { if (e.key === 'Enter') handleSave(cat.id); if (e.key === 'Escape') cancelEdit() }}
-                                   autoFocus
-                                   className="flex-1 bg-transparent py-2.5 px-2 text-sm font-bold text-slate-800 outline-none" />
-                          </div>
-                          <button onClick={() => handleSave(cat.id)} disabled={saving}
-                                  className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl
-                                             hover:bg-blue-700 disabled:opacity-50 transition-colors">
-                            <Check className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                {inactiveRows.map(cat => {
+                  const catWithMeta = { ...cat, spent: 0, budget: undefined }
+                  return (
+                    <BudgetRow
+                      key={cat.id}
+                      cat={catWithMeta}
+                      isEditing={editing === cat.id}
+                      inputVal={editing === cat.id ? inputVal : ''}
+                      saving={saving}
+                      onToggleEdit={() => editing === cat.id ? cancelEdit() : startEdit(cat.id, null)}
+                      onInputChange={setInputVal}
+                      onKeyDown={e => { if (e.key === 'Enter') handleSave(cat.id); if (e.key === 'Escape') cancelEdit() }}
+                      onSave={() => handleSave(cat.id)}
+                      onRemove={() => handleRemove(cat.id)}
+                    />
+                  )
+                })}
               </div>
             )}
           </div>
@@ -450,6 +508,12 @@ function MonthlyView({ monthExpenses, salary1, salary2, month, year, expenses, m
   const prevMonthSpent = monthlyTrend[monthlyTrend.length - 2]?.total ?? 0
   const vsLastMonth    = prevMonthSpent > 0 ? Math.round(((totalSpent - prevMonthSpent) / prevMonthSpent) * 100) : null
 
+  // Budget alerts for this month
+  const overBudgetCats = budgets.filter(b => {
+    const s = monthExpenses.filter(e => e.category === b.category_id).reduce((sum, e) => sum + e.amount, 0)
+    return s > parseFloat(b.monthly_limit)
+  })
+
   return (
     <div className="space-y-4">
       {/* Hero summary */}
@@ -457,7 +521,7 @@ function MonthlyView({ monthExpenses, salary1, salary2, month, year, expenses, m
         <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-4">
           <p className="text-blue-100 text-xs font-medium uppercase tracking-wide">{MONTHS[month - 1]} {year} — Total Spent</p>
           <p className="text-3xl font-bold text-white mt-1">{fmt(totalSpent)}</p>
-          <div className="flex items-center gap-3 mt-1">
+          <div className="flex items-center gap-3 mt-1 flex-wrap">
             {totalSalary > 0 && (
               <p className="text-blue-200 text-sm">{spendPct}% of {fmt(totalSalary)} salary</p>
             )}
@@ -503,6 +567,33 @@ function MonthlyView({ monthExpenses, salary1, salary2, month, year, expenses, m
         </div>
       </div>
 
+      {/* Budget alert strip — only if any budget exceeded */}
+      {overBudgetCats.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xl">🚨</span>
+            <p className="text-sm font-bold text-red-700">Budget exceeded this month</p>
+          </div>
+          <div className="space-y-2">
+            {overBudgetCats.map(b => {
+              const cat   = getCategoryById(b.category_id)
+              const spent = monthExpenses.filter(e => e.category === b.category_id).reduce((s, e) => s + e.amount, 0)
+              const limit = parseFloat(b.monthly_limit)
+              return (
+                <div key={b.category_id} className="flex items-center justify-between bg-white/60 rounded-xl px-3 py-2">
+                  <span className="text-sm font-medium text-slate-700">{cat.emoji} {cat.label}</span>
+                  <div className="text-right">
+                    <span className="text-sm font-bold text-red-600">{fmt(spent)}</span>
+                    <span className="text-xs text-red-400"> / {fmt(limit)}</span>
+                    <p className="text-[10px] text-red-500 font-semibold">+{fmt(spent - limit)} over</p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Person comparison */}
       {member2 && (
         <div className="card p-4">
@@ -530,11 +621,11 @@ function MonthlyView({ monthExpenses, salary1, salary2, month, year, expenses, m
         </div>
       )}
 
-      {/* Category breakdown — ranked, with budget badges */}
+      {/* Category breakdown with budget status */}
       <div className="card p-4">
         <SectionTitle
           title="Where is money going?"
-          sub={`${categoryBreakdown.length} categories · ${MONTHS[month - 1]} ${year}${budgets.length > 0 ? ' · budget tracked' : ''}`}
+          sub={`${categoryBreakdown.length} categories · ${MONTHS[month - 1]} ${year}${budgets.length > 0 ? ' · budget tracked' : ' · set budgets in Budget tab'}`}
         />
         {categoryBreakdown.length > 0 && (
           <div className="flex items-center gap-3 mb-4 bg-slate-50 rounded-xl p-3">
@@ -557,7 +648,9 @@ function MonthlyView({ monthExpenses, salary1, salary2, month, year, expenses, m
                     <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: c.color }} />
                     <span className="text-xs text-slate-600 truncate flex-1">{c.emoji} {c.label}</span>
                     <span className="text-xs font-bold text-slate-800 flex-shrink-0">{pct(c.value, totalSpent)}%</span>
-                    {isOver && <span className="text-[9px] text-red-500 font-bold">⚠</span>}
+                    {isOver && (
+                      <span className="text-[9px] bg-red-500 text-white font-bold px-1 py-0.5 rounded-full flex-shrink-0">OVER</span>
+                    )}
                   </div>
                 )
               })}
@@ -572,7 +665,7 @@ function MonthlyView({ monthExpenses, salary1, salary2, month, year, expenses, m
 
       {/* 6-month trend */}
       <div className="card p-4">
-        <SectionTitle title="6-Month Spending Trend" sub={member2 ? `${member1} & ${member2} combined` : `${member1}'s spending`} />
+        <SectionTitle title="6-Month Spending Trend" sub={member2 ? `${member1} & ${member2}` : `${member1}'s spending`} />
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={monthlyTrend} barSize={14} barGap={2}>
@@ -592,7 +685,7 @@ function MonthlyView({ monthExpenses, salary1, salary2, month, year, expenses, m
         </div>
       </div>
 
-      {/* Insights */}
+      {/* Key Insights */}
       {monthExpenses.length > 0 && (
         <div className="card p-4 mb-4">
           <SectionTitle title="💡 Key Insights" />
@@ -601,26 +694,18 @@ function MonthlyView({ monthExpenses, salary1, salary2, month, year, expenses, m
               <div className="flex items-start gap-3 p-3 bg-orange-50 border border-orange-100 rounded-xl">
                 <span className="text-2xl">{categoryBreakdown[0].emoji}</span>
                 <div>
-                  <p className="text-sm font-semibold text-slate-800">Highest spending: {categoryBreakdown[0].label}</p>
-                  <p className="text-xs text-slate-500">{fmt(categoryBreakdown[0].value)} · {pct(categoryBreakdown[0].value, totalSpent)}% of all expenses</p>
+                  <p className="text-sm font-semibold text-slate-800">Highest: {categoryBreakdown[0].label}</p>
+                  <p className="text-xs text-slate-500">{fmt(categoryBreakdown[0].value)} · {pct(categoryBreakdown[0].value, totalSpent)}% of total expenses</p>
                 </div>
               </div>
             )}
-            {/* Over-budget alert */}
-            {budgets.filter(b => {
-              const s = monthExpenses.filter(e => e.category === b.category_id).reduce((sum, e) => sum + e.amount, 0)
-              return s > parseFloat(b.monthly_limit)
-            }).length > 0 && (
-              <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-100 rounded-xl">
-                <span className="text-2xl">⚠️</span>
+            {overBudgetCats.length > 0 && (
+              <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded-xl">
+                <span className="text-2xl">🚨</span>
                 <div>
-                  <p className="text-sm font-semibold text-slate-800">Budget exceeded</p>
-                  <p className="text-xs text-slate-500">
-                    {budgets.filter(b => {
-                      const s = monthExpenses.filter(e => e.category === b.category_id).reduce((sum, e) => sum + e.amount, 0)
-                      return s > parseFloat(b.monthly_limit)
-                    }).map(b => getCategoryById(b.category_id).label).join(', ')} {' '}
-                    went over limit this month
+                  <p className="text-sm font-semibold text-red-700">{overBudgetCats.length} categor{overBudgetCats.length > 1 ? 'ies' : 'y'} over budget</p>
+                  <p className="text-xs text-red-500">
+                    {overBudgetCats.map(b => getCategoryById(b.category_id).label).join(', ')}
                   </p>
                 </div>
               </div>
@@ -632,9 +717,7 @@ function MonthlyView({ monthExpenses, salary1, salary2, month, year, expenses, m
                   <p className="text-sm font-semibold text-slate-800">
                     {spent1 > spent2 ? member1 : member2} spent more this month
                   </p>
-                  <p className="text-xs text-slate-500">
-                    {fmt(Math.abs(spent1 - spent2))} more than {spent1 > spent2 ? member2 : member1}
-                  </p>
+                  <p className="text-xs text-slate-500">{fmt(Math.abs(spent1 - spent2))} more than {spent1 > spent2 ? member2 : member1}</p>
                 </div>
               </div>
             )}
@@ -651,12 +734,8 @@ function MonthlyView({ monthExpenses, salary1, salary2, month, year, expenses, m
               <div className={`flex items-start gap-3 p-3 rounded-xl border ${vsLastMonth <= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
                 <span className="text-2xl">{vsLastMonth <= 0 ? '📉' : '📈'}</span>
                 <div>
-                  <p className="text-sm font-semibold text-slate-800">
-                    {vsLastMonth <= 0 ? 'Spending reduced!' : 'Spending increased'}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {Math.abs(vsLastMonth)}% {vsLastMonth > 0 ? 'more' : 'less'} than last month ({fmt(prevMonthSpent)})
-                  </p>
+                  <p className="text-sm font-semibold text-slate-800">{vsLastMonth <= 0 ? 'Spending reduced!' : 'Spending increased'}</p>
+                  <p className="text-xs text-slate-500">{Math.abs(vsLastMonth)}% {vsLastMonth > 0 ? 'more' : 'less'} than last month ({fmt(prevMonthSpent)})</p>
                 </div>
               </div>
             )}
@@ -668,7 +747,7 @@ function MonthlyView({ monthExpenses, salary1, salary2, month, year, expenses, m
 }
 
 // ─── Weekly View ──────────────────────────────────────────────────────────────
-function WeeklyView({ monthExpenses, month, year, salary1, salary2, member1, member2, emoji1, emoji2, budgets }) {
+function WeeklyView({ monthExpenses, month, year, member1, member2, emoji1, emoji2, budgets }) {
   const weeks = useMemo(() => getWeeks(year, month), [year, month])
   const [weekIdx, setWeekIdx] = useState(() => currentWeekIndex(year, month))
 
@@ -688,7 +767,7 @@ function WeeklyView({ monthExpenses, month, year, salary1, salary2, member1, mem
   const dailyData = useMemo(() => {
     const data = []
     for (let day = selWeek.start; day <= selWeek.end; day++) {
-      const date     = new Date(year, month - 1, day)
+      const date = new Date(year, month - 1, day)
       const dayLabel = DAY_LABELS[date.getDay()]
       const s1 = weekExpenses.filter(e => new Date(e.expense_date).getDate() === day && e.paid_by === member1).reduce((s, e) => s + e.amount, 0)
       const s2 = member2 ? weekExpenses.filter(e => new Date(e.expense_date).getDate() === day && e.paid_by === member2).reduce((s, e) => s + e.amount, 0) : 0
@@ -720,16 +799,14 @@ function WeeklyView({ monthExpenses, month, year, salary1, salary2, member1, mem
 
   return (
     <div className="space-y-4">
-      {/* Week selector */}
       <div className="card p-3">
         <p className="text-xs text-slate-400 font-medium mb-2 px-1">Select Week</p>
         <div className="flex gap-2">
           {weeks.map((w, i) => (
             <button key={w.wk} onClick={() => setWeekIdx(i)}
                     className={`flex-1 py-2 px-1 rounded-xl text-center transition-all duration-150 border ${
-                      weekIdx === i
-                        ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
-                        : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
+                      weekIdx === i ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
+                                    : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
                     }`}>
               <p className="text-[11px] font-bold">W{w.wk}</p>
               <p className="text-[9px] mt-0.5 opacity-80">{w.label}</p>
@@ -738,7 +815,6 @@ function WeeklyView({ monthExpenses, month, year, salary1, salary2, member1, mem
         </div>
       </div>
 
-      {/* Week hero */}
       <div className="card overflow-hidden">
         <div className="bg-gradient-to-r from-indigo-600 to-blue-700 p-4">
           <p className="text-indigo-100 text-xs font-medium uppercase tracking-wide">
@@ -770,7 +846,6 @@ function WeeklyView({ monthExpenses, month, year, salary1, salary2, member1, mem
         </div>
       </div>
 
-      {/* Daily bar chart */}
       <div className="card p-4">
         <SectionTitle title="Daily Spending" sub={`Week ${selWeek.wk}: ${MONTHS[month - 1]} ${selWeek.start}–${selWeek.end}`} />
         {dailyData.every(d => d.total === 0) ? (
@@ -798,7 +873,6 @@ function WeeklyView({ monthExpenses, month, year, salary1, salary2, member1, mem
         )}
       </div>
 
-      {/* Category breakdown for the week */}
       <div className="card p-4 mb-4">
         <SectionTitle title="Category Spending This Week" sub={weekCategoryBreakdown.length > 0 ? `${weekCategoryBreakdown.length} categories` : undefined} />
         <CategoryList breakdown={weekCategoryBreakdown} total={totalWeek} budgets={budgets} emptyMsg="No expenses this week" />
@@ -833,7 +907,6 @@ export default function Analytics({ expenses, monthExpenses, salary1, salary2, m
         {tab === 'Weekly' && (
           <WeeklyView
             monthExpenses={monthExpenses} month={month} year={year}
-            salary1={salary1} salary2={salary2}
             member1={member1} member2={member2} emoji1={emoji1} emoji2={emoji2}
             budgets={budgets}
           />
