@@ -11,6 +11,26 @@ import BottomNav from './components/BottomNav'
 import AddExpenseModal from './components/AddExpenseModal'
 import ChangePasswordModal from './components/ChangePasswordModal'
 
+const toNumber = (value) => {
+  const parsed = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+const normalizeExpense = (expense) => ({
+  ...expense,
+  amount: toNumber(expense.amount),
+})
+
+const normalizeSalary = (salary) => ({
+  ...salary,
+  amount: toNumber(salary.amount),
+})
+
+const normalizeBudget = (budget) => ({
+  ...budget,
+  monthly_limit: toNumber(budget.monthly_limit),
+})
+
 function LoadingScreen() {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -67,10 +87,10 @@ function AppShell({ family, onLogout }) {
         .eq('family_id', familyId),
     ])
     if (expRes.error) setError(expRes.error.message)
-    else setExpenses(expRes.data ?? [])
+    else setExpenses((expRes.data ?? []).map(normalizeExpense))
     if (salRes.error) setError(salRes.error.message)
-    else setSalaries(salRes.data ?? [])
-    if (!budRes.error) setBudgets(budRes.data ?? [])
+    else setSalaries((salRes.data ?? []).map(normalizeSalary))
+    if (!budRes.error) setBudgets((budRes.data ?? []).map(normalizeBudget))
   }, [familyId])
 
   useEffect(() => { fetchAll().finally(() => setLoading(false)) }, [fetchAll])

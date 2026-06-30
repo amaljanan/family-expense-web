@@ -41,7 +41,7 @@ function ExpenseItem({ expense, onDelete, onEdit, member1 = 'Amal' }) {
         <p className="text-[10px] text-slate-400 mt-0.5">{dateLabel(expense.expense_date)}</p>
       </div>
       <div className="flex items-center gap-1 flex-shrink-0">
-        <p className="text-sm font-bold text-slate-800 mr-1">₹{expense.amount.toLocaleString('en-IN')}</p>
+        <p className="text-sm font-bold text-slate-800 mr-1">{fmt(expense.amount)}</p>
         <button onClick={() => onEdit(expense)}
                 className="w-7 h-7 flex items-center justify-center rounded-lg
                            text-slate-400 hover:text-blue-600 hover:bg-blue-50

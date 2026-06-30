@@ -31,6 +31,10 @@ ON CONFLICT (username) DO NOTHING;
 -- 3. Add family_id to expenses
 ALTER TABLE expenses ADD COLUMN IF NOT EXISTS family_id UUID REFERENCES families(id);
 
+-- 3a. Remove the old hardcoded member-name checks so any family can use the app
+ALTER TABLE expenses DROP CONSTRAINT IF EXISTS expenses_paid_by_check;
+ALTER TABLE salaries DROP CONSTRAINT IF EXISTS salaries_person_check;
+
 -- 4. Migrate existing expenses → Amal & Aiswarya family
 UPDATE expenses
 SET family_id = (SELECT id FROM families WHERE username = 'amalaiswarya')

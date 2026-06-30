@@ -2,7 +2,11 @@ import { useState } from 'react'
 import { X, IndianRupee } from 'lucide-react'
 import { CATEGORIES } from '../data/categories'
 
-const TODAY = new Date().toISOString().split('T')[0]
+const pad = (value) => String(value).padStart(2, '0')
+const TODAY = (() => {
+  const now = new Date()
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+})()
 
 export default function AddExpenseModal({ onClose, onSave, initialData, member1 = 'Amal', member2 = 'Aiswarya', emoji1 = '👨', emoji2 = '👩' }) {
   const isEditing = !!initialData

@@ -9,7 +9,7 @@ create table if not exists expenses (
   amount      decimal(12, 2) not null,
   category    text not null,
   description text default '',
-  paid_by     text not null check (paid_by in ('Amal', 'Aiswarya')),
+  paid_by     text not null,
   expense_date date not null default current_date,
   is_recurring boolean default false,
   created_at  timestamptz default now()
@@ -18,7 +18,7 @@ create table if not exists expenses (
 -- 2. Salaries table
 create table if not exists salaries (
   id       uuid default gen_random_uuid() primary key,
-  person   text not null check (person in ('Amal', 'Aiswarya')),
+  person   text not null,
   month    integer not null check (month between 1 and 12),
   year     integer not null,
   amount   decimal(12, 2) not null,

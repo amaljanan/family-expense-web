@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -29,10 +29,10 @@ function getWeeks(year, month) {
   return weeks
 }
 
-function currentWeekIndex(year, month) {
+function currentWeekIndex(year, month, weekCount) {
   const today = new Date()
   if (today.getFullYear() !== year || today.getMonth() + 1 !== month) return 0
-  return Math.min(Math.floor((today.getDate() - 1) / 7), 3)
+  return Math.min(Math.floor((today.getDate() - 1) / 7), Math.max(0, weekCount - 1))
 }
 
 function TabBar({ tab, setTab, tabs }) {
@@ -749,7 +749,11 @@ function MonthlyView({ monthExpenses, salary1, salary2, month, year, expenses, m
 // ─── Weekly View ──────────────────────────────────────────────────────────────
 function WeeklyView({ monthExpenses, month, year, member1, member2, emoji1, emoji2, budgets }) {
   const weeks = useMemo(() => getWeeks(year, month), [year, month])
-  const [weekIdx, setWeekIdx] = useState(() => currentWeekIndex(year, month))
+  const [weekIdx, setWeekIdx] = useState(() => currentWeekIndex(year, month, getWeeks(year, month).length))
+
+  useEffect(() => {
+    setWeekIdx(currentWeekIndex(year, month, weeks.length))
+  }, [year, month, weeks.length])
 
   const selWeek = weeks[weekIdx] ?? weeks[0]
 

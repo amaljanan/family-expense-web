@@ -82,7 +82,7 @@ function RecentItem({ expense, member1 }) {
         </div>
       </div>
       <div className="text-right flex-shrink-0">
-        <p className="text-sm font-bold text-slate-800">₹{expense.amount.toLocaleString('en-IN')}</p>
+        <p className="text-sm font-bold text-slate-800">{fmt(expense.amount)}</p>
         <p className="text-[10px] text-slate-400">{dateLabel(expense.expense_date)}</p>
       </div>
     </div>

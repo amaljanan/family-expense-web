@@ -1,13 +1,13 @@
 # 💰 Family Finance Tracker
 
-A beautiful, responsive web app to track family expenses — built for **Amal & Aiswarya**.
+A beautiful, responsive web app to track family expenses for any family account.
 
 ## ✨ Features
 
 - **Dashboard** — Combined salary, total spent, savings rate, per-person spending cards with progress bars
-- **Add Expense** — 22 categories with emoji icons, description, date, paid-by selector (Amal / Aiswarya)
+- **Add Expense** — 22 categories with emoji icons, description, date, paid-by selector based on the active family
 - **Expenses** — Month filter, search, filter by person/category, grouped by date, edit & delete
-- **Reports** — Monthly & Weekly tabs with ranked category breakdown, Amal vs Aiswarya comparison, 6-month trend, daily chart, savings insights
+- **Reports** — Monthly & Weekly tabs with ranked category breakdown, family member comparison, 6-month trend, daily chart, savings insights
 - **Salary** — Enter monthly salary for each person, combined family income, history
 
 ## 🗂️ Categories
@@ -35,6 +35,7 @@ cd family-expense-web
 ### 2. Set up Supabase
 - Create a free project at [supabase.com](https://supabase.com)
 - Open **SQL Editor** and run `supabase_setup.sql`
+- If you already created the old Amal/Aiswarya schema, also run `supabase_families_setup.sql` to remove the hardcoded member checks and migrate to multi-family support
 - Copy your **Project URL** and **anon key**
 
 ### 3. Create `.env`
@@ -73,4 +74,4 @@ salaries  (id, person, month, year, amount, created_at)
 
 ---
 
-Built with ❤️ for Amal & Aiswarya's family finance management.
+Built with ❤️ for family finance management.
