@@ -15,6 +15,7 @@ export const CATEGORIES = [
   { id: 'entertainment',    label: 'Entertainment',         emoji: '🎬', color: '#a855f7' },
   { id: 'subscriptions',    label: 'Subscriptions / OTT',   emoji: '📺', color: '#4f46e5' },
   { id: 'travel',           label: 'Travel & Vacation',     emoji: '✈️', color: '#fb923c' },
+  { id: 'sports_games',     label: 'Sports / Games',        emoji: '🏏', color: '#22c55e' },
   { id: 'personal_care',    label: 'Personal Care',         emoji: '💈', color: '#f43f5e' },
   { id: 'gifts',            label: 'Gifts & Celebrations',  emoji: '🎁', color: '#e879f9' },
   { id: 'kids',             label: 'Kids & Family',         emoji: '👨‍👩‍👧', color: '#84cc16' },
