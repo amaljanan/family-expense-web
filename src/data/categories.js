@@ -7,6 +7,7 @@ export const CATEGORIES = [
   { id: 'utilities',        label: 'Electricity & Utilities',emoji: '💡', color: '#06b6d4' },
   { id: 'mobile_internet',  label: 'Mobile & Internet',     emoji: '📱', color: '#14b8a6' },
   { id: 'healthcare',       label: 'Healthcare',            emoji: '💊', color: '#ef4444' },
+  { id: 'supplements',      label: 'Supplements',           emoji: '🥤', color: '#14b8a6' },
   { id: 'education',        label: 'Education',             emoji: '📚', color: '#6366f1' },
   { id: 'sip',              label: 'Mutual Fund SIP',       emoji: '📈', color: '#10b981' },
   { id: 'loan_emi',         label: 'Loan / EMI',            emoji: '🏦', color: '#dc2626' },
