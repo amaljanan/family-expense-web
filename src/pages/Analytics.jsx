@@ -5,7 +5,7 @@ import {
 } from 'recharts'
 import { Pencil, Trash2, Check, X } from 'lucide-react'
 import { fmt, pct, MONTHS, shortMonth } from '../utils/format'
-import { getCategoryById, CATEGORIES } from '../data/categories'
+import { getCategoryById, CATEGORIES, isInvestmentCategory } from '../data/categories'
 import MonthSelector from '../components/MonthSelector'
 import { supabase } from '../lib/supabase'
 
@@ -475,29 +475,32 @@ function BudgetView({ monthExpenses, budgets, familyId, onBudgetRefresh, month, 
 }
 
 // ─── Monthly View ─────────────────────────────────────────────────────────────
-function MonthlyView({ monthExpenses, salary1, salary2, month, year, expenses, member1, member2, emoji1, emoji2, budgets }) {
+function MonthlyView({ monthExpenses, monthInvestments = [], salary1, salary2, month, year, expenses, member1, member2, emoji1, emoji2, budgets }) {
   const totalSalary = salary1 + salary2
+  const expenseOnly = useMemo(() => monthExpenses.filter(e => !isInvestmentCategory(e.category)), [monthExpenses])
+  const totalInvested = useMemo(() => monthExpenses.filter(e => isInvestmentCategory(e.category)).reduce((sum, expense) => sum + expense.amount, 0), [monthExpenses])
   const spent1      = useMemo(() => monthExpenses.filter(e => e.paid_by === member1).reduce((s, e) => s + e.amount, 0), [monthExpenses, member1])
   const spent2      = useMemo(() => monthExpenses.filter(e => e.paid_by === member2).reduce((s, e) => s + e.amount, 0), [monthExpenses, member2])
-  const totalSpent  = spent1 + spent2
-  const totalSaved  = Math.max(0, totalSalary - totalSpent)
+  const totalSpent  = expenseOnly.reduce((sum, expense) => sum + expense.amount, 0)
+  const totalInclusive = spent1 + spent2
+  const totalSaved  = Math.max(0, totalSalary - totalSpent - totalInvested)
   const spendPct    = totalSalary > 0 ? Math.round((totalSpent / totalSalary) * 100) : null
   const savePct     = totalSalary > 0 ? Math.round((totalSaved / totalSalary) * 100) : null
 
   const categoryBreakdown = useMemo(() => {
     const map = {}
-    monthExpenses.forEach(e => { map[e.category] = (map[e.category] ?? 0) + e.amount })
+    expenseOnly.forEach(e => { map[e.category] = (map[e.category] ?? 0) + e.amount })
     return Object.entries(map).map(([id, v]) => ({ ...getCategoryById(id), value: v }))
       .sort((a, b) => b.value - a.value)
-  }, [monthExpenses])
+  }, [expenseOnly])
 
   const monthlyTrend = useMemo(() => {
     const result = []
     for (let i = 5; i >= 0; i--) {
       const d = new Date(year, month - 1 - i, 1)
       const m = d.getMonth() + 1, y = d.getFullYear()
-      const s1 = expenses.filter(e => { const ed = new Date(e.expense_date); return e.paid_by === member1 && ed.getMonth() + 1 === m && ed.getFullYear() === y }).reduce((s, e) => s + e.amount, 0)
-      const s2 = member2 ? expenses.filter(e => { const ed = new Date(e.expense_date); return e.paid_by === member2 && ed.getMonth() + 1 === m && ed.getFullYear() === y }).reduce((s, e) => s + e.amount, 0) : 0
+      const s1 = expenses.filter(e => { const ed = new Date(e.expense_date); return !isInvestmentCategory(e.category) && e.paid_by === member1 && ed.getMonth() + 1 === m && ed.getFullYear() === y }).reduce((s, e) => s + e.amount, 0)
+      const s2 = member2 ? expenses.filter(e => { const ed = new Date(e.expense_date); return !isInvestmentCategory(e.category) && e.paid_by === member2 && ed.getMonth() + 1 === m && ed.getFullYear() === y }).reduce((s, e) => s + e.amount, 0) : 0
       const pt = { label: shortMonth(m), total: s1 + s2, [member1]: s1 }
       if (member2) pt[member2] = s2
       result.push(pt)
@@ -510,7 +513,7 @@ function MonthlyView({ monthExpenses, salary1, salary2, month, year, expenses, m
 
   // Budget alerts for this month
   const overBudgetCats = budgets.filter(b => {
-    const s = monthExpenses.filter(e => e.category === b.category_id).reduce((sum, e) => sum + e.amount, 0)
+    const s = expenseOnly.filter(e => e.category === b.category_id).reduce((sum, e) => sum + e.amount, 0)
     return s > parseFloat(b.monthly_limit)
   })
 
@@ -600,13 +603,14 @@ function MonthlyView({ monthExpenses, salary1, salary2, month, year, expenses, m
           <SectionTitle title={`${emoji1} ${member1} vs ${emoji2} ${member2}`} sub="Spending comparison this month" />
           <div className="grid grid-cols-2 gap-3">
             {[
-              { name: member1, spent: spent1, salary: salary1, color: '#2563eb', bg: 'bg-blue-50', border: 'border-blue-200', emoji: emoji1 },
-              { name: member2, spent: spent2, salary: salary2, color: '#db2777', bg: 'bg-pink-50', border: 'border-pink-200', emoji: emoji2 },
+              { name: member1, spent: spent1, salary: salary1, investment: monthExpenses.filter(e => e.paid_by === member1 && isInvestmentCategory(e.category)).reduce((s, e) => s + e.amount, 0), color: '#2563eb', bg: 'bg-blue-50', border: 'border-blue-200', emoji: emoji1 },
+              { name: member2, spent: spent2, salary: salary2, investment: monthExpenses.filter(e => e.paid_by === member2 && isInvestmentCategory(e.category)).reduce((s, e) => s + e.amount, 0), color: '#db2777', bg: 'bg-pink-50', border: 'border-pink-200', emoji: emoji2 },
             ].map(p => (
               <div key={p.name} className={`${p.bg} border ${p.border} rounded-2xl p-3`}>
                 <p className="text-base mb-1">{p.emoji} <span className="text-sm font-semibold text-slate-700">{p.name}</span></p>
                 <p className="text-xl font-bold" style={{ color: p.color }}>{fmt(p.spent)}</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">{pct(p.spent, totalSpent)}% of total</p>
+                {p.investment > 0 && <p className="text-[11px] font-semibold text-emerald-600 mt-0.5">Investment: {fmt(p.investment)}</p>}
+                <p className="text-[11px] text-slate-400 mt-0.5">{pct(p.spent, totalInclusive)}% of total</p>
                 {p.salary > 0 && (
                   <>
                     <div className="w-full h-1.5 bg-white/70 rounded-full mt-2 overflow-hidden">
@@ -886,7 +890,7 @@ function WeeklyView({ monthExpenses, month, year, member1, member2, emoji1, emoj
 }
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
-export default function Analytics({ expenses, monthExpenses, salary1, salary2, month, setMonth, year, setYear, member1 = 'Member', member2, emoji1 = '👤', emoji2 = '👤', budgets = [], familyId, onBudgetRefresh }) {
+export default function Analytics({ expenses, monthExpenses, monthInvestments = [], salary1, salary2, month, setMonth, year, setYear, member1 = 'Member', member2, emoji1 = '👤', emoji2 = '👤', budgets = [], familyId, onBudgetRefresh }) {
   const [tab, setTab] = useState('Monthly')
 
   return (
@@ -902,7 +906,7 @@ export default function Analytics({ expenses, monthExpenses, salary1, salary2, m
 
         {tab === 'Monthly' && (
           <MonthlyView
-            monthExpenses={monthExpenses} salary1={salary1} salary2={salary2}
+            monthExpenses={monthExpenses} monthInvestments={monthInvestments} salary1={salary1} salary2={salary2}
             month={month} year={year} expenses={expenses}
             member1={member1} member2={member2} emoji1={emoji1} emoji2={emoji2}
             budgets={budgets}

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { TrendingDown, TrendingUp, Wallet, PiggyBank, Plus, ArrowRight, KeyRound, LogOut } from 'lucide-react'
 import { fmt, pct, MONTHS, dateLabel } from '../utils/format'
-import { getCategoryById } from '../data/categories'
+import { getCategoryById, isInvestmentCategory } from '../data/categories'
 import MonthSelector from '../components/MonthSelector'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 
@@ -26,7 +26,7 @@ function StatCard({ label, value, sub, iconBg, iconColor, icon: Icon }) {
   )
 }
 
-function PersonCard({ name, spent, salary, color, bgColor, emoji }) {
+function PersonCard({ name, spent, investmentSpent = 0, salary, color, bgColor, emoji }) {
   const remaining = Math.max(0, salary - spent)
   const usedPct = salary > 0 ? Math.min(100, pct(spent, salary)) : 0
   return (
@@ -44,6 +44,11 @@ function PersonCard({ name, spent, salary, color, bgColor, emoji }) {
         </div>
         <p className="text-lg font-bold" style={{ color }}>{fmt(spent)}</p>
         <p className="text-[11px] text-slate-400 mb-2">spent this month</p>
+        {investmentSpent > 0 && (
+          <p className="text-[11px] font-semibold text-emerald-600 mb-2">
+            Investments: {fmt(investmentSpent)}
+          </p>
+        )}
         {salary > 0 && (
           <>
             <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -89,16 +94,22 @@ function RecentItem({ expense, member1 }) {
   )
 }
 
-export default function Dashboard({ monthExpenses, salary1, salary2, member1, member2, emoji1, emoji2, familyName, month, setMonth, year, setYear, onAddExpense, onChangePw, onLogout }) {
+export default function Dashboard({ monthExpenses, monthInvestments = [], salary1, salary2, member1, member2, emoji1, emoji2, familyName, month, setMonth, year, setYear, onAddExpense, onChangePw, onLogout }) {
   const totalSalary   = salary1 + salary2
   const spent1        = useMemo(() => monthExpenses.filter(e => e.paid_by === member1).reduce((s, e) => s + e.amount, 0), [monthExpenses, member1])
   const spent2        = useMemo(() => monthExpenses.filter(e => e.paid_by === member2).reduce((s, e) => s + e.amount, 0), [monthExpenses, member2])
   const totalSpent    = spent1 + spent2
+  const investment1   = useMemo(() => monthInvestments.filter(e => e.paid_by === member1).reduce((s, e) => s + e.amount, 0), [monthInvestments, member1])
+  const investment2   = useMemo(() => monthInvestments.filter(e => e.paid_by === member2).reduce((s, e) => s + e.amount, 0), [monthInvestments, member2])
+  const totalInvested = investment1 + investment2
   const totalSavings  = Math.max(0, totalSalary - totalSpent)
 
   const categoryData = useMemo(() => {
     const map = {}
-    monthExpenses.forEach(e => { map[e.category] = (map[e.category] ?? 0) + e.amount })
+    monthExpenses.forEach(e => {
+      if (isInvestmentCategory(e.category)) return
+      map[e.category] = (map[e.category] ?? 0) + e.amount
+    })
     return Object.entries(map).map(([id, value]) => ({ ...getCategoryById(id), value }))
       .sort((a, b) => b.value - a.value).slice(0, 6)
   }, [monthExpenses])
@@ -164,11 +175,11 @@ export default function Dashboard({ monthExpenses, salary1, salary2, member1, me
             sub={`${monthExpenses.length} transaction${monthExpenses.length !== 1 ? 's' : ''}`}
             iconBg="bg-red-100" iconColor="text-red-500" icon={TrendingDown} />
           <StatCard label="Savings" value={totalSalary > 0 ? fmt(totalSavings) : '—'}
-            sub={totalSalary > 0 ? `${100 - Math.min(100, pct(totalSpent, totalSalary))}% saved` : 'Add salary first'}
+            sub={totalSalary > 0 ? 'remaining after expenses' : 'Add salary first'}
             iconBg="bg-emerald-100" iconColor="text-emerald-600" icon={PiggyBank} />
-          <StatCard label="Transactions" value={monthExpenses.length}
-            sub={monthExpenses.filter(e => e.is_recurring).length > 0
-              ? `${monthExpenses.filter(e => e.is_recurring).length} recurring`
+          <StatCard label="Transactions" value={monthExpenses.length + monthInvestments.length}
+            sub={(monthExpenses.filter(e => e.is_recurring).length + monthInvestments.filter(e => e.is_recurring).length) > 0
+              ? `${monthExpenses.filter(e => e.is_recurring).length + monthInvestments.filter(e => e.is_recurring).length} recurring`
               : 'this month'}
             iconBg="bg-violet-100" iconColor="text-violet-600" icon={TrendingUp} />
         </div>
@@ -176,10 +187,10 @@ export default function Dashboard({ monthExpenses, salary1, salary2, member1, me
         {/* Person cards */}
         <div className={`flex gap-3 ${!member2 ? 'justify-center' : ''}`}>
           <PersonCard name={member1} spent={spent1} salary={salary1}
-                      color="#2563eb" bgColor="bg-blue-100" emoji={emoji1} />
+                      investmentSpent={investment1} color="#2563eb" bgColor="bg-blue-100" emoji={emoji1} />
           {member2 && (
             <PersonCard name={member2} spent={spent2} salary={salary2}
-                        color="#db2777" bgColor="bg-pink-100" emoji={emoji2} />
+                        investmentSpent={investment2} color="#db2777" bgColor="bg-pink-100" emoji={emoji2} />
           )}
         </div>
 

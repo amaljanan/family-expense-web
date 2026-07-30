@@ -103,12 +103,13 @@ function AppShell({ family, onLogout }) {
     const d = new Date(e.expense_date)
     return d.getMonth() + 1 === month && d.getFullYear() === year
   })
+  const monthInvestments = monthExpenses.filter(e => ['sip', 'investments'].includes(e.category))
 
   const getSalaryFor = (person) =>
     salaries.find(s => s.person === person && s.month === month && s.year === year)?.amount ?? 0
 
   const shared = {
-    expenses, monthExpenses, salaries, budgets,
+    expenses, monthExpenses, monthInvestments, salaries, budgets,
     member1, member2, emoji1, emoji2, familyName, familyId,
     salary1: getSalaryFor(member1),
     salary2: getSalaryFor(member2),

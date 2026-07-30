@@ -25,5 +25,18 @@ export const CATEGORIES = [
   { id: 'miscellaneous',    label: 'Miscellaneous',         emoji: '💸', color: '#94a3b8' },
 ]
 
+export const INVESTMENT_CATEGORY_IDS = new Set(['sip', 'investments'])
+
+export const isInvestmentCategory = (categoryId) => INVESTMENT_CATEGORY_IDS.has(categoryId)
+
+export const isRealExpenseCategory = (categoryId) => !isInvestmentCategory(categoryId)
+
+export const splitExpenseBuckets = (expenses = []) =>
+  expenses.reduce((buckets, expense) => {
+    if (isInvestmentCategory(expense.category)) buckets.investments.push(expense)
+    else buckets.expenses.push(expense)
+    return buckets
+  }, { expenses: [], investments: [] })
+
 export const getCategoryById = (id) =>
   CATEGORIES.find(c => c.id === id) ?? { id, label: id, emoji: '💸', color: '#94a3b8' }
